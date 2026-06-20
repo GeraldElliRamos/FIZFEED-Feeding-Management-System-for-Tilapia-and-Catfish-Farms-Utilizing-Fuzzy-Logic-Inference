@@ -8,5 +8,8 @@
     "mobile:start": "npm run start --prefix mobile",
     "mobile:android": "npm run android --prefix mobile",
     "mobile:ios": "npm run ios --prefix mobile"
+  },
+  "dependencies": {
+    "expo-linear-gradient": "^56.0.4"
   }
 }

@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   Modal,
@@ -44,6 +45,7 @@ type NavButtonProps = {
   label: string;
   active?: boolean;
   hasNotification?: boolean;
+  onPress?: () => void;
 };
 
 type PondRecord = {
@@ -64,6 +66,7 @@ type ScheduleRecord = {
   time: string;
   ponds: string;
   feedWeight: string;
+  active?: boolean;
 };
 
 function MetricCard({ icon, value, label, iconColor, bgColor }: MetricCardProps) {
@@ -78,9 +81,12 @@ function MetricCard({ icon, value, label, iconColor, bgColor }: MetricCardProps)
   );
 }
 
-function NavButton({ icon, label, active, hasNotification }: NavButtonProps) {
+function NavButton({ icon, label, active, hasNotification, onPress }: NavButtonProps) {
   return (
-    <Pressable style={styles.navButton}>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [styles.navButton, pressed && styles.navButtonPressed]}
+    >
       <MaterialIcons name={icon} size={24} color={active ? colors.primary : colors.onSurfaceVariant} />
       <Text style={[styles.navLabel, active && styles.navLabelActive]}>{label}</Text>
       {hasNotification ? <View style={styles.notificationBadge} /> : null}
@@ -89,6 +95,7 @@ function NavButton({ icon, label, active, hasNotification }: NavButtonProps) {
 }
 
 export default function DashboardScreen() {
+  const router = useRouter();
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [pondName, setPondName] = useState('');
   const [pondType, setPondType] = useState('');
@@ -98,11 +105,12 @@ export default function DashboardScreen() {
   const [expandedPondId, setExpandedPondId] = useState<string | null>(null);
   const [showPondForm, setShowPondForm] = useState(true);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
-  const [scheduleHour, setScheduleHour] = useState('06');
-  const [scheduleMinute, setScheduleMinute] = useState('00');
-  const [schedulePeriod, setSchedulePeriod] = useState<'AM' | 'PM'>('AM');
+  const [scheduleHour, setScheduleHour] = useState('');
+  const [scheduleMinute, setScheduleMinute] = useState('');
+  const [schedulePeriod, setSchedulePeriod] = useState<'AM' | 'PM' | ''>('');
   const [schedulePonds, setSchedulePonds] = useState('');
-  const [scheduleFeedWeight, setScheduleFeedWeight] = useState('');
+  const [scheduleFishType, setScheduleFishType] = useState('');
+  const [scheduleFishMenuOpen, setScheduleFishMenuOpen] = useState(false);
   const [schedules, setSchedules] = useState<ScheduleRecord[]>([]);
   const hourOptions = Array.from({ length: 12 }, (_, hour) => String(hour + 1).padStart(2, '0'));
   const minuteOptions = Array.from({ length: 60 }, (_, minute) => String(minute).padStart(2, '0'));
@@ -143,10 +151,14 @@ export default function DashboardScreen() {
 
   const handleSaveSchedule = () => {
     const trimmedPonds = schedulePonds.trim();
-    const trimmedFeedWeight = scheduleFeedWeight.trim();
+    const trimmedFishType = scheduleFishType.trim();
+    if (!scheduleHour || !scheduleMinute || !schedulePeriod) {
+      return;
+    }
+
     const trimmedTime = `${scheduleHour}:${scheduleMinute} ${schedulePeriod}`;
 
-    if (!trimmedPonds || !trimmedFeedWeight) {
+    if (!trimmedPonds || !trimmedFishType) {
       return;
     }
 
@@ -156,13 +168,15 @@ export default function DashboardScreen() {
         id: `${Date.now()}-${currentSchedules.length}`,
         time: trimmedTime,
         ponds: trimmedPonds,
-        feedWeight: trimmedFeedWeight,
+        feedWeight: trimmedFishType,
+        active: true,
       },
     ]);
     setSchedulePonds('');
-    setScheduleFeedWeight('');
+    setScheduleFishType('');
     setShowScheduleForm(false);
     setScheduleTimeMenuOpen(false);
+    setScheduleFishMenuOpen(false);
   };
 
   return (
@@ -183,7 +197,10 @@ export default function DashboardScreen() {
             </View>
 
             <View style={styles.headerBottomRow}>
-              <View />
+              <View>
+                <Text style={styles.pageBannerTitle}>Dashboard</Text>
+                <Text style={styles.pageBannerSubtitle}>Track pond conditions and activity</Text>
+              </View>
               <View style={styles.dateInfo}>
                 <Text style={styles.dateLabel}>Today</Text>
                 <Text style={styles.dateText}>
@@ -205,10 +222,10 @@ export default function DashboardScreen() {
 
           <View style={styles.mainContent}>
             <View style={styles.metricsGrid}>
-              <MetricCard icon="thermostat" value="28.5°" label="Temperature" iconColor={colors.primary} bgColor="#e8f0fe" />
-              <MetricCard icon="opacity" value="7.2" label="pH Level" iconColor={colors.secondary} bgColor="#e6f4f1" />
-              <MetricCard icon="inventory-2" value="7.4kg" label="Feed Weight" iconColor={colors.tertiary} bgColor="#eaf5ea" />
-              <MetricCard icon="wb-sunny" value="320 lx" label="Ambient Light" iconColor={colors.primaryContainer} bgColor="#e8f0fe" />
+              <MetricCard icon="thermostat" value="--" label="Temperature" iconColor={colors.primary} bgColor="#e8f0fe" />
+              <MetricCard icon="opacity" value="--" label="pH Level" iconColor={colors.secondary} bgColor="#e6f4f1" />
+              <MetricCard icon="inventory-2" value="--" label="Feed Weight" iconColor={colors.tertiary} bgColor="#eaf5ea" />
+              <MetricCard icon="wb-sunny" value="--" label="Ambient Light" iconColor={colors.primaryContainer} bgColor="#e8f0fe" />
             </View>
 
             <View style={styles.section}>
@@ -346,13 +363,11 @@ export default function DashboardScreen() {
                       <View key={schedule.id} style={styles.savedScheduleRow}>
                         <View style={styles.savedScheduleLeft}>
                           <View style={styles.savedScheduleDot} />
-                          <View>
-                            <Text style={styles.savedScheduleTime}>{schedule.time}</Text>
-                            <Text style={styles.savedScheduleMeta}>
-                              Ponds: {schedule.ponds} • {schedule.feedWeight}
-                            </Text>
+                            <View>
+                              <Text style={styles.savedScheduleTime}>{schedule.time}</Text>
+                              <Text style={styles.savedScheduleMeta}>Ponds: {schedule.ponds}</Text>
+                            </View>
                           </View>
-                        </View>
                       </View>
                     ))}
                   </View>
@@ -371,8 +386,8 @@ export default function DashboardScreen() {
                     <View style={styles.inputGroup}>
                       <Text style={styles.inputLabel}>Time</Text>
                       <Pressable style={styles.dropdownButton} onPress={() => setScheduleTimeMenuOpen(true)}>
-                        <Text style={styles.dropdownButtonText}>
-                          {`${scheduleHour}:${scheduleMinute} ${schedulePeriod}`}
+                        <Text style={[styles.dropdownButtonText, !scheduleHour && styles.dropdownPlaceholder]}>
+                          {scheduleHour ? `${scheduleHour}:${scheduleMinute} ${schedulePeriod}` : 'Select time'}
                         </Text>
                         <MaterialIcons name="arrow-drop-down" size={22} color={colors.onSurfaceVariant} />
                       </Pressable>
@@ -388,14 +403,13 @@ export default function DashboardScreen() {
                       />
                     </View>
                     <View style={styles.inputGroup}>
-                      <Text style={styles.inputLabel}>Feed Weight</Text>
-                      <TextInput
-                        style={styles.input}
-                        placeholder="e.g. 4.3kg"
-                        placeholderTextColor={colors.onSurfaceVariant}
-                        value={scheduleFeedWeight}
-                        onChangeText={setScheduleFeedWeight}
-                      />
+                      <Text style={styles.inputLabel}>Fish Type</Text>
+                      <Pressable style={styles.dropdownButton} onPress={() => setScheduleFishMenuOpen(true)}>
+                        <Text style={[styles.dropdownButtonText, !scheduleFishType && styles.dropdownPlaceholder]}>
+                          {scheduleFishType || 'Select fish type'}
+                        </Text>
+                        <MaterialIcons name="arrow-drop-down" size={22} color={colors.onSurfaceVariant} />
+                      </Pressable>
                     </View>
                     <Pressable style={styles.saveButton} onPress={handleSaveSchedule}>
                       <Text style={styles.saveButtonText}>Save Schedule</Text>
@@ -475,6 +489,36 @@ export default function DashboardScreen() {
                     </Pressable>
                   </Pressable>
                 </Modal>
+
+                <Modal
+                  transparent
+                  visible={scheduleFishMenuOpen}
+                  animationType="fade"
+                  onRequestClose={() => setScheduleFishMenuOpen(false)}
+                >
+                  <Pressable style={styles.dropdownOverlay} onPress={() => setScheduleFishMenuOpen(false)}>
+                    <Pressable style={styles.timePickerSheet} onPress={() => {}}>
+                      <Text style={styles.timePickerTitle}>Select fish type</Text>
+                      <View style={styles.timePickerColumn}>
+                        {['Tilapia', 'Catfish (Hito)'].map((option) => (
+                          <Pressable
+                            key={option}
+                            style={[
+                              styles.dropdownOption,
+                              scheduleFishType === option && styles.dropdownOptionSelected,
+                            ]}
+                            onPress={() => setScheduleFishType(option)}
+                          >
+                            <Text style={styles.dropdownOptionText}>{option}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                      <Pressable style={styles.saveButton} onPress={() => setScheduleFishMenuOpen(false)}>
+                        <Text style={styles.saveButtonText}>Done</Text>
+                      </Pressable>
+                    </Pressable>
+                  </Pressable>
+                </Modal>
               </View>
             </View>
           </View>
@@ -482,7 +526,7 @@ export default function DashboardScreen() {
 
         <View style={styles.bottomNav}>
           <NavButton icon="home" label="Home" active />
-          <NavButton icon="calendar-month" label="Schedule" />
+          <NavButton icon="calendar-month" label="Schedule" onPress={() => router.push('/schedule')} />
           <NavButton icon="bar-chart" label="Analytics" />
           <NavButton icon="notifications" label="Alerts" hasNotification />
           <NavButton icon="person" label="Profile" />
@@ -548,6 +592,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     marginTop: 8,
+  },
+  pageBannerTitle: {
+    color: colors.onPrimary,
+    fontSize: 24,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  pageBannerSubtitle: {
+    marginTop: 4,
+    color: 'rgba(255,255,255,0.86)',
+    fontSize: 13,
+    fontWeight: '500',
   },
   dateInfo: {
     alignItems: 'flex-end',
@@ -903,6 +959,45 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
   },
+  scheduleBanner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 12,
+    padding: 14,
+    borderRadius: 14,
+    backgroundColor: 'rgba(216, 226, 255, 0.5)',
+    marginBottom: 14,
+  },
+  scheduleBannerIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: colors.surfaceContainerLowest,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scheduleBannerTextWrap: {
+    flex: 1,
+  },
+  scheduleBannerTitle: {
+    color: colors.primary,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  scheduleBannerText: {
+    marginTop: 3,
+    color: colors.onSurfaceVariant,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  savedScheduleTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+  },
   savedScheduleLeft: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -914,6 +1009,9 @@ const styles = StyleSheet.create({
     borderRadius: 9999,
     backgroundColor: colors.tertiary,
   },
+  savedScheduleDotInactive: {
+    backgroundColor: colors.outlineVariant,
+  },
   savedScheduleTime: {
     color: colors.onSurface,
     fontSize: 14,
@@ -923,6 +1021,26 @@ const styles = StyleSheet.create({
     color: colors.onSurfaceVariant,
     fontSize: 12,
     marginTop: 2,
+  },
+  savedScheduleStatusPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 9999,
+    backgroundColor: colors.surfaceContainerHigh,
+  },
+  savedScheduleStatusPillInactive: {
+    backgroundColor: '#f0f1f2',
+  },
+  savedScheduleStatusText: {
+    color: colors.onSurfaceVariant,
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  savedScheduleRowInactive: {
+    opacity: 0.65,
   },
   scheduleEmptyState: {
     alignItems: 'center',
@@ -938,43 +1056,50 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 14,
     backgroundColor: colors.surface,
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 8,
+    borderTopWidth: 1,
+    borderTopColor: colors.surfaceContainerHigh,
   },
   navButton: {
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 8,
-    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
     position: 'relative',
+    minWidth: 54,
   },
   navButtonPressed: {
     opacity: 0.8,
   },
   navLabel: {
-    fontSize: 10,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: '500',
     color: colors.onSurfaceVariant,
     marginTop: 2,
   },
   navLabelActive: {
     color: colors.primary,
+    fontWeight: '700',
   },
   notificationBadge: {
     position: 'absolute',
-    top: 4,
-    right: 12,
-    width: 8,
-    height: 8,
+    top: 3,
+    right: 18,
+    width: 7,
+    height: 7,
     backgroundColor: colors.error,
     borderRadius: 9999,
   },
 });
+

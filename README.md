@@ -1,352 +1,250 @@
-# 🐟 FIZFEED — Fuzzy Inference-Based Feeding Management System
+﻿# FIZFEED
 
-> **For Tilapia and Catfish Farms**
-> A smart feeding management system that uses fuzzy logic to determine optimal feeding schedules and amounts for tilapia and catfish aquaculture.
+FIZFEED is a fuzzy inference-based feeding management system for tilapia and catfish farms. It helps farm operators estimate feeding recommendations using environmental and biological inputs such as water temperature, fish age, and fish weight.
 
----
+The repository contains two apps:
 
-## 📋 Table of Contents
+- `web/` - browser-based dashboard for monitoring, configuration, and reports
+- `mobile/` - Android mobile app for on-the-go feeding checks using Expo Go
 
-1. [Project Overview](#project-overview)
-2. [Tech Stack](#tech-stack)
-3. [Prerequisites](#prerequisites)
-4. [Project Structure](#project-structure)
-5. [Getting Started](#getting-started)
-   - [Running the Web App](#running-the-web-app)
-   - [Running the Mobile App](#running-the-mobile-app)
-6. [Environment Variables Setup](#environment-variables-setup)
-7. [Mobile App — Important Notes](#mobile-app--important-notes)
-8. [Troubleshooting](#troubleshooting)
-9. [For Future Developers](#for-future-developers)
+## Overview
 
----
+FIZFEED is designed to support smarter feeding decisions with a simple workflow:
 
-## 🧠 Project Overview
+1. Enter farm and fish data
+2. Let the fuzzy inference engine compute a recommendation
+3. Review the suggested feeding amount and schedule
+4. Use the web or mobile app depending on where you are
 
-**FIZFEED** is a capstone project that provides fish farm operators with an intelligent feeding management system powered by **fuzzy inference logic**. The system takes environmental and biological inputs (e.g., water temperature, fish age, fish weight) and computes the recommended feeding amount and schedule.
-
-The system has two client apps:
-
-| App | Description |
-|-----|-------------|
-| **Web App** (`web/`) | Browser-based dashboard for farm managers — monitoring, configuration, and reports |
-| **Mobile App** (`mobile/`) | Android mobile app for on-the-go feeding monitoring via Expo Go |
-
----
-
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Web App
-| Technology | Purpose |
-|------------|---------|
-| React 18 + TypeScript | UI framework |
-| Vite | Build tool & dev server |
-| Vanilla CSS | Styling |
+
+- React 18 + TypeScript
+- Vite
+- Vanilla CSS
 
 ### Mobile App
-| Technology | Purpose |
-|------------|---------|
-| React Native | Cross-platform mobile framework |
-| Expo SDK 54 | Managed workflow & device APIs |
-| Expo Router | File-based navigation |
-| TypeScript | Type-safe development |
 
----
+- React Native
+- Expo SDK 54
+- Expo Router
+- TypeScript
 
-## ✅ Prerequisites
+## Prerequisites
 
-Before you begin, make sure the following are installed on your machine:
+Make sure these are installed before running the project:
 
-### 1. Node.js (via Scoop — already installed on dev machines)
+- **Node.js** 20 or newer
+- **npm**
+- **Git**
+- **Android Studio** if you plan to run the mobile app on Android or use the Android SDK tools
+- **Expo Go** on an Android phone if you want to test the mobile app on a physical device
+
+### Quick checks
+
 ```powershell
-# Verify Node is working
-node -v    # should show v20.x or higher
-npm -v     # should show 10.x or higher
-```
-
-> ⚠️ **If `node` or `npm` is not found in your terminal**, the PATH may not have loaded yet.
-> Run this command to refresh environment variables without restarting:
-> ```powershell
-> $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "User") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "Machine")
-> ```
-> Or simply **close and reopen VS Code / your terminal**.
-
-### 2. Git
-```powershell
+node -v
+npm -v
 git --version
 ```
 
-### 3. Android Studio *(for mobile development only)*
-- Used for the Android SDK, `adb` (Android Debug Bridge), and build tools.
-- Required environment variables (set at User level in Windows):
-  - `ANDROID_HOME` → `C:\Users\<YourName>\AppData\Local\Android\Sdk`
-  - `JAVA_HOME` → path to JDK 21
-  - `PATH` must include `%ANDROID_HOME%\platform-tools`
-
-### 4. Expo Go App *(on your Android phone)*
-- Install **Expo Go v54** from the Google Play Store.
-- ⚠️ This project uses **Expo SDK 54** — do NOT install a different version of Expo Go.
-
----
-
-## 📁 Project Structure
-
-```
-FIZFEED/
-│
-├── README.md                   ← You are here
-├── package.json                ← Root workspace with shortcut scripts
-│
-├── web/                        ← Web App (React + Vite + TypeScript)
-│   ├── index.html
-│   ├── src/
-│   │   ├── main.tsx            ← App entry point
-│   │   ├── App.tsx             ← Root component
-│   │   └── ...
-│   ├── package.json
-│   └── vite.config.ts
-│
-└── mobile/                     ← Mobile App (React Native + Expo SDK 54)
-    ├── app/
-    │   ├── _layout.tsx         ← Root navigator (Expo Router)
-    │   ├── index.tsx           ← Splash screen (entry point)
-    │   ├── (tabs)/             ← Main tab screens
-    │   └── modal.tsx
-    ├── assets/
-    │   └── images/
-    │       └── splash-icon.png ← FIZFEED logo (transparent PNG)
-    ├── app.json                ← Expo configuration
-    └── package.json
-```
-
----
-
-## 🚀 Getting Started
-
-### Initial Setup (First Time Only)
-
-Clone the repository and install dependencies for **both** apps:
+If `node` or `npm` is not recognized, restart your terminal or refresh your PATH:
 
 ```powershell
-# 1. Navigate to the project folder
-cd "c:\Capstone Project\FIZFEED-Fuzzy-Inference-Based-Feeding-Management-System-for-Tilapia-and-Catfish-Farms"
+$env:Path = [System.Environment]::GetEnvironmentVariable("Path", "User") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "Machine")
+```
 
-# 2. Install web dependencies
+## Project Structure
+
+```text
+FIZFEED/
+|-- README.md
+|-- package.json
+|-- web/
+|   |-- src/
+|   |-- index.html
+|   |-- package.json
+|-- mobile/
+    |-- app/
+    |-- assets/
+    |-- app.json
+    |-- package.json
+```
+
+## Getting Started
+
+### 1) Install dependencies
+
+From the project root:
+
+```powershell
+cd "c:\Capstone Project\FIZFEED-Fuzzy-Inference-Based-Feeding-Management-System-for-Tilapia-and-Catfish-Farms"
 cd web
 npm install
 cd ..
-
-# 3. Install mobile dependencies
 cd mobile
 npm install
 cd ..
 ```
 
----
+### 2) Run the web app
 
-### Running the Web App
-
-You can run the web app from the **root directory** using the shortcut script:
+From the root directory:
 
 ```powershell
-# From the root FIZFEED directory:
 npm run web:dev
 ```
 
-Or, if you prefer to work directly inside the `web/` folder:
+Or run it directly inside `web/`:
 
 ```powershell
 cd web
 npm run dev
 ```
 
-The web app will start at: **http://localhost:5173**
+The web app opens at `http://localhost:5173`.
 
-Open that URL in your browser. Changes you make to the code will hot-reload automatically.
+#### Web commands
 
-#### Other Web Commands
-| Command (from root) | What it does |
-|---------------------|--------------|
-| `npm run web:dev` | Start the dev server |
-| `npm run web:build` | Build for production |
+- `npm run web:dev` - start the development server
+- `npm run web:build` - build the web app for production
 
----
+### 3) Run the mobile app
 
-### Running the Mobile App
-
-You can run the mobile app from the **root directory** using the shortcut script:
+From the root directory:
 
 ```powershell
-# From the root FIZFEED directory:
 npm run mobile:start
 ```
 
-Or, run it directly inside the `mobile/` folder:
+Or run it directly inside `mobile/`:
 
 ```powershell
 cd mobile
 npx expo start
 ```
 
-**Then:**
-1. A **QR code** will appear in your terminal.
-2. Open the **Expo Go** app on your Android phone.
-3. Tap **"Scan QR Code"** and scan the code.
-4. The app will load on your phone! 🎉
+Then:
 
-> 📱 Make sure your phone and computer are on the **same Wi-Fi network**.
+1. A QR code appears in the terminal.
+2. Open **Expo Go** on your Android phone.
+3. Scan the QR code.
+4. The app loads on your phone.
 
-#### Other Mobile Commands
-| Command (from root) | What it does |
-|---------------------|--------------|
-| `npm run mobile:start` | Start Expo dev server (scan QR with Expo Go) |
-| `npm run mobile:android` | Run on Android emulator (not needed for physical phone) |
-| `npm run mobile:ios` | Run on iOS simulator (macOS only) |
+Make sure your phone and computer are on the same Wi-Fi network.
 
----
+#### Mobile commands
 
-## 🔧 Environment Variables Setup
+- `npm run mobile:start` - start the Expo dev server
+- `npm run mobile:android` - run on an Android emulator
+- `npm run mobile:ios` - run on the iOS simulator on macOS
 
-These must be set on the developer's Windows machine (already configured on the main dev machine).
+## Environment Variables for Android Development
 
-### For Mobile/Android development:
+If you are working on mobile/Android development, set these environment variables on Windows:
+
+- `ANDROID_HOME` - for example: `C:\Users\<YourName>\AppData\Local\Android\Sdk`
+- `JAVA_HOME` - path to JDK 21
+- Add `%ANDROID_HOME%\platform-tools` to your `PATH`
+
+After updating them, restart your terminal or VS Code.
+
+### Verify Android setup
 
 ```powershell
-# Set via Windows System Properties > Environment Variables > User Variables
-ANDROID_HOME = C:\Users\<YourName>\AppData\Local\Android\Sdk
-JAVA_HOME    = C:\Program Files\Java\jdk-21   # or wherever JDK 21 is installed
-
-# Also add these to your PATH (User Variables):
-%ANDROID_HOME%\platform-tools
-%ANDROID_HOME%\tools
+adb --version
+java --version
 ```
 
-After setting these, **restart your terminal** (or VS Code) so they take effect.
+## Important Mobile Notes
 
-### Verify setup:
-```powershell
-adb --version        # should print Android Debug Bridge version
-java --version       # should print java 21.x.x
-```
+- This project uses **Expo SDK 54**. Avoid running `expo upgrade` unless the team plans to update the whole app.
+- The FIZFEED logo uses a transparent PNG. On Android, avoid `elevation` or shadow props on containers wrapping the logo image, or a white box may appear behind it.
+- The mobile app is intended for testing on a physical Android phone with Expo Go.
+- Expo Router loads `mobile/app/index.tsx` first. That file contains the splash screen flow.
 
----
+## Troubleshooting
 
-## 📱 Mobile App — Important Notes
+### `node` or `npm` is not found
 
-> Read these carefully to avoid common issues.
+Restart your terminal, or refresh PATH with:
 
-### ⚠️ Expo SDK Version
-This project uses **Expo SDK 54**. Do NOT run `expo upgrade` or change the SDK version in `app.json` or `package.json`. The Expo Go app installed on the test phone is version **54.0.8**, which is only compatible with SDK 54.
-
-### ⚠️ Transparent PNG Logos
-The FIZFEED logo (`assets/images/splash-icon.png`) is a **transparent PNG**. When using it in React Native:
-- ❌ **Do NOT** add `elevation` or shadow props to the `View` wrapping the logo image on Android — it causes a white box to appear behind transparent areas.
-- ✅ Use a plain `<View>` with no shadow/elevation for logo containers.
-
-### ⚠️ Testing on Physical Phone Only
-We test exclusively on a **physical Android phone** with **Expo Go**. No Android emulator setup is required for running the app.
-
-### ℹ️ Entry Point
-Expo Router always loads `app/index.tsx` first. This is where the animated **splash screen** lives. Navigation to the main app tabs happens from there.
-
----
-
-## 🐛 Troubleshooting
-
-### `npm` or `node` not found
-Run the PATH refresh command:
 ```powershell
 $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "User") + ";" + [System.Environment]::GetEnvironmentVariable("Path", "Machine")
 ```
-Or close and reopen your terminal / VS Code.
 
----
+### Expo QR code does not connect
 
-### Expo QR code not working / phone can't connect
-- Make sure your phone and PC are on the **same Wi-Fi network**.
-- Try pressing `w` in the Expo terminal to open the web version first, to confirm the server is running.
-- If on a school/work network, try using your phone's mobile hotspot and connecting the PC to it.
+- Confirm both devices are on the same Wi-Fi network.
+- Try opening the web version first to confirm the server is running.
+- If your network blocks local device discovery, try a phone hotspot.
 
----
+### White box appears behind the logo
 
-### White box appearing behind the logo
-This is an Android elevation issue. Remove `elevation`, `shadowColor`, `shadowOpacity`, `shadowRadius`, and `shadowOffset` from the `View` that wraps your `<Image>` component.
+Remove `elevation` and shadow-related styles from the logo container on Android.
 
----
+### Metro cache problems
 
-### Metro bundler stuck / cached errors
-Clear the Expo cache:
 ```powershell
 cd mobile
 npx expo start --clear
 ```
 
----
+### `adb` is not found
 
-### Android build issues / `adb` not found
-Verify your `ANDROID_HOME` and `PATH` are correctly set. Then run:
-```powershell
-adb --version
-```
-If this fails, restart your terminal after checking environment variables in Windows System Properties.
+Check `ANDROID_HOME` and `PATH`, then restart your terminal.
 
----
+## For Future Developers
 
-## 👨‍💻 For Future Developers
+### Project priorities
 
-Welcome! Here's what you need to know to continue this project:
+- Mobile-first workflow, with web support for management tasks
+- Fuzzy logic is the core algorithmic layer
+- Keep the design consistent with the existing style tokens and typography
 
-### Codebase Philosophy
-- **Mobile first, then web** — the mobile app is the primary user-facing tool for farm operators.
-- **Fuzzy logic** is the core algorithm — look for the inference engine modules in the relevant source folders.
-- Keep the design system consistent: **Manrope font**, primary color `#005BBF`, secondary color `#006874`, surface background `#f8f9fa`.
+### Adding a new mobile screen
 
-### Adding New Mobile Screens
-This project uses **Expo Router** (file-based routing, similar to Next.js):
-- Create a new file inside `mobile/app/` → it becomes a route automatically.
-- Files inside `mobile/app/(tabs)/` → appear as bottom tab bar items.
-- See [Expo Router docs](https://docs.expo.dev/router/introduction/) for full reference.
+The mobile app uses Expo Router, so new files inside `mobile/app/` become routes automatically.
 
-### Adding New Web Pages
-The web app uses **React + Vite**:
-- Add new components inside `web/src/`.
-- Run `npm run web:dev` to test locally.
-- See [Vite docs](https://vitejs.dev/) and [React docs](https://react.dev/) for reference.
+- Put tab screens inside `mobile/app/(tabs)/`
+- Put shared or modal screens elsewhere in `mobile/app/`
 
-### Key Dependencies to Know
-| Package | Where | Why |
-|---------|-------|-----|
-| `expo-router` | mobile | File-based navigation |
-| `expo-splash-screen` | mobile | Controls native splash screen |
-| `react-native-reanimated` | mobile | Smooth animations |
-| `vite` | web | Fast build tool |
-| `react` + `react-dom` | web | UI framework |
+### Adding a new web page
 
-### Branching Strategy (Recommended)
-```
-main         ← stable, tested code only
-dev          ← active development
-feature/xxx  ← individual features (branch off dev)
-```
+The web app uses React + Vite.
 
-### Before Committing
-- Test the mobile app on a physical device using Expo Go.
-- Test the web app in the browser at `localhost:5173`.
-- Make sure no sensitive keys or tokens are committed (use `.env` files).
+- Add components inside `web/src/`
+- Run `npm run web:dev` while developing
 
----
+### Useful dependencies
 
-## 👥 Team
+- `expo-router` - mobile navigation
+- `expo-splash-screen` - native splash handling
+- `react-native-reanimated` - mobile animations
+- `vite` - web development and builds
 
-**FIZFEED** is a Capstone Project by:
+### Suggested branching
+
+- `main` - stable, tested code
+- `dev` - active development
+- `feature/<name>` - individual features
+
+### Before committing
+
+- Test the web app in the browser
+- Test the mobile app on a physical Android device if possible
+- Avoid committing secrets or local environment files
+
+## Team
+
+FIZFEED was created by:
 
 - Carl Vincent D. Canilang
 - Anton Patrick E. Fontillas
 - Monard Kyle B. Malicdem
 - Gerald Elli T. Ramos
 
----
+## License
 
-## 📄 License
-
-This project is for academic/capstone purposes. All rights reserved by the authors.
+This project is for academic and capstone purposes. All rights reserved by the authors.

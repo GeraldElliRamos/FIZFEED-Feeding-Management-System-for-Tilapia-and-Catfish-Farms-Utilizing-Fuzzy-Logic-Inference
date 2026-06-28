@@ -29,6 +29,8 @@ export default function SplashScreen() {
   const ringOpacity = useRef(new Animated.Value(0.6)).current;
 
   useEffect(() => {
+    const dotTimer = setTimeout(animateDots, 800);
+
     // Ring pulse animation (loops indefinitely)
     Animated.loop(
       Animated.sequence([
@@ -72,7 +74,7 @@ export default function SplashScreen() {
     });
 
     // Loading dots animation
-    const animateDots = () => {
+    function animateDots() {
       Animated.sequence([
         Animated.timing(dotOpacity1, { toValue: 1, duration: 300, useNativeDriver: true }),
         Animated.timing(dotOpacity2, { toValue: 1, duration: 300, useNativeDriver: true }),
@@ -84,10 +86,10 @@ export default function SplashScreen() {
           Animated.timing(dotOpacity3, { toValue: 0.3, duration: 300, useNativeDriver: true }),
         ]),
       ]).start(() => animateDots());
-    };
-    const dotTimer = setTimeout(animateDots, 800);
+    }
+
     return () => clearTimeout(dotTimer);
-  }, []);
+  }, [dotOpacity1, dotOpacity2, dotOpacity3, logoOpacity, logoScale, overlayOpacity, ringOpacity, ringScale, router, subtitleOpacity, subtitleTranslateY, titleOpacity, titleTranslateY]);
 
   return (
     <View style={styles.container}>

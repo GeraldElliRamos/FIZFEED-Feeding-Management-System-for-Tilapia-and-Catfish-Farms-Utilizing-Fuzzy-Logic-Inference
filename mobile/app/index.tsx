@@ -47,6 +47,7 @@ export default function SplashScreen() {
   const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    const timers: ReturnType<typeof setTimeout>[] = [];
     // ── Logo float loop ──────────────────────────────────────────
     Animated.loop(
       Animated.sequence([
@@ -80,38 +81,38 @@ export default function SplashScreen() {
     ).start();
 
     // ── Progress section fade-up (delay: 600ms) ──────────────────
-    setTimeout(() => {
+    timers.push(setTimeout(() => {
       Animated.parallel([
         Animated.timing(progressOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
         Animated.timing(progressTranslateY, { toValue: 0, duration: 800, useNativeDriver: true }),
       ]).start();
-    }, 600);
+    }, 600));
 
     // ── Footer fade-up (delay: 900ms) ────────────────────────────
-    setTimeout(() => {
+    timers.push(setTimeout(() => {
       Animated.parallel([
         Animated.timing(footerOpacity, { toValue: 1, duration: 800, useNativeDriver: true }),
         Animated.timing(footerTranslateY, { toValue: 0, duration: 800, useNativeDriver: true }),
       ]).start();
-    }, 900);
+    }, 900));
 
     // ── Progress bar fill (starts at 500ms, lasts 3s) ────────────
-    setTimeout(() => {
+    timers.push(setTimeout(() => {
       Animated.timing(barWidth, {
         toValue: BAR_WIDTH,
         duration: 3000,
         useNativeDriver: false,
       }).start();
-    }, 500);
+    }, 500));
 
     // ── Milestone status text updates ────────────────────────────
     MILESTONES.forEach((milestone) => {
       const delay = 500 + (milestone.p / 100) * 3000;
-      setTimeout(() => {
+      timers.push(setTimeout(() => {
         setStatusText(milestone.t);
         setPercent(milestone.p);
         if (milestone.p >= 100) setIsReady(true);
-      }, delay);
+      }, delay));
     });
 
     // ── Navigate after loading finishes ─────────────────────────
@@ -119,8 +120,12 @@ export default function SplashScreen() {
       router.replace('/login');
     }, 4800);
 
-    return () => clearTimeout(navTimer);
-  }, []);
+    timers.push(navTimer);
+
+    return () => {
+      timers.forEach(clearTimeout);
+    };
+  }, [barWidth, blob1Opacity, blob2Opacity, footerOpacity, footerTranslateY, logoFloat, progressOpacity, progressTranslateY, router]);
 
   return (
     <View style={styles.container}>

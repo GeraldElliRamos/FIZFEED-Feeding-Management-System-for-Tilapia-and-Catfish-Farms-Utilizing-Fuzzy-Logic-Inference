@@ -1,17 +1,13 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform, StyleSheet } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import designTokens from '@/constants/design-tokens';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 
 const { colors, fontSize, fontFamily } = designTokens;
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
@@ -86,7 +82,3 @@ export default function TabLayout() {
     </Tabs>
   );
 }
-
-const styles = StyleSheet.create({
-  // Add any specific styles for _layout.tsx here if needed
-});

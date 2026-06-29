@@ -528,8 +528,8 @@ export default function DashboardScreen() {
           <NavButton icon="home" label="Home" active />
           <NavButton icon="calendar-month" label="Schedule" onPress={() => router.push('/schedule')} />
           <NavButton icon="bar-chart" label="Analytics" />
-          <NavButton icon="notifications" label="Alerts" hasNotification />
-          <NavButton icon="person" label="Profile" />
+          <NavButton icon="notifications" label="Alerts" onPress={() => router.push('/alerts')} />
+          <NavButton icon="person" label="Profile" onPress={() => router.push('/profile')} />
         </View>
       </View>
     </SafeAreaView>

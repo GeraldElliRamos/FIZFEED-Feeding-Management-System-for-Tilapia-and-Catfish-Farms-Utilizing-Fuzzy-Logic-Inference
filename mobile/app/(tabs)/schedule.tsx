@@ -244,8 +244,8 @@ export default function ScheduleScreen() {
           <BottomNavItem icon="home" label="Home" onPress={() => router.replace('/')} />
           <BottomNavItem icon="calendar-month" label="Schedule" active />
           <BottomNavItem icon="bar-chart" label="Analytics" />
-          <BottomNavItem icon="notifications" label="Alerts" notification />
-          <BottomNavItem icon="person" label="Profile" />
+          <BottomNavItem icon="notifications" label="Alerts" onPress={() => router.push('/alerts')} />
+          <BottomNavItem icon="person" label="Profile" onPress={() => router.push('/profile')} />
         </View>
 
         <Modal visible={showAddForm} transparent animationType="fade" onRequestClose={() => setShowAddForm(false)}>
@@ -378,7 +378,7 @@ export default function ScheduleScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background },
   screen: { flex: 1, backgroundColor: colors.background },
-  content: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 110, gap: 16 },
+  content: { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 124, gap: 16 },
   topBar: {
     minHeight: 128,
     paddingHorizontal: 14,
@@ -683,15 +683,59 @@ const styles = StyleSheet.create({
   insightValue: { color: colors.primary, fontSize: 22, fontWeight: '800' },
   insightValueAlt: { color: colors.tertiary },
   bottomNav: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: colors.surface,
-    borderTopLeftRadius: 16, borderTopRightRadius: 16, borderTopWidth: 1, borderTopColor: colors.surfaceContainerHigh,
-    paddingHorizontal: 12, paddingTop: 12, paddingBottom: 14, flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center',
-    shadowColor: '#000', shadowOffset: { width: 0, height: -2 }, shadowOpacity: 0.12, shadowRadius: 8, elevation: 8,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: colors.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    borderTopWidth: 1,
+    borderTopColor: colors.surfaceContainerHigh,
+    paddingHorizontal: 12,
+    paddingTop: 12,
+    paddingBottom: 14,
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 8,
   },
-  navItem: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, minWidth: 54 },
-  navItemPressed: { opacity: 0.8 },
-  navIconWrap: { position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  navLabel: { marginTop: 2, fontSize: 11, fontWeight: '500', color: colors.onSurfaceVariant },
-  navLabelActive: { color: colors.primary, fontWeight: '700' },
-  notificationDot: { position: 'absolute', top: -1, right: -2, width: 7, height: 7, borderRadius: 999, backgroundColor: colors.error },
+  navItem: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    position: 'relative',
+    minWidth: 54,
+  },
+  navItemPressed: {
+    opacity: 0.8,
+  },
+  navIconWrap: {
+    position: 'relative',
+  },
+  navLabel: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: colors.onSurfaceVariant,
+    marginTop: 2,
+  },
+  navLabelActive: {
+    color: colors.primary,
+    fontWeight: '700',
+  },
+  notificationDot: {
+    position: 'absolute',
+    top: -1,
+    right: -2,
+    width: 7,
+    height: 7,
+    borderRadius: 999,
+    backgroundColor: colors.error,
+  },
 });

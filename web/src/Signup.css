@@ -1,0 +1,259 @@
+* {
+  box-sizing: border-box;
+}
+
+/* Layout */
+.signup-container {
+  min-height: 100vh;
+  background: #f8fafc;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ================= TOP NAVBAR ================= */
+.top-navbar {
+  width: 100%;
+  height: 64px;
+  padding: 0 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(250, 250, 255, 0.85);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.nav-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-logo {
+  height: 36px;
+}
+
+.nav-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.nav-right {
+  font-size: 14px;
+  font-weight: 500;
+  color: #475569;
+}
+
+
+
+.brand {
+  font-weight: 600;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.tagline {
+  font-size: 13px;
+  color: #475569;
+ 
+}
+
+/* Center */
+.signup-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Card */
+.signup-card {
+  width: 100%;
+  max-width: 420px;
+  background: #ffffff;
+  padding: 32px;
+  border-radius: 16px;
+  box-shadow: 0 20px 25px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  text-align: center;
+}
+
+/* Logo */
+.logo-container {
+  width: 96px;
+  height: 96px;
+  margin: 0 auto 24px;
+}
+
+.logo-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ✅ PURE BLACK TITLE */
+.signup-card h1 {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: #000000;
+}
+
+/* Subtitle */
+.subtitle {
+  font-size: 14px;
+  color: #475569;
+  margin-bottom: 24px;
+}
+
+/* Form */
+.form-group {
+  text-align: left;
+  margin-bottom: 18px;
+}
+
+.form-group label {
+  font-size: 12px;
+  color: #475569;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+  background: #ffffff;
+}
+
+/* Password */
+.password-group {
+  position: relative;
+}
+
+.show-btn {
+  position: absolute;
+  right: 12px;
+  top: 34px;
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2563eb;
+  cursor: pointer;
+}
+
+/* ✅ WHITE CUSTOM CHECKBOX */
+.terms {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 12px;
+  color: #475569;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+.terms input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 2px solid #e5e7eb;
+  background-color: #ffffff;
+  cursor: pointer;
+  position: relative;
+  margin-top: 2px;
+}
+
+.terms input[type="checkbox"]:checked {
+  background-color: #2563eb;
+  border-color: #2563eb;
+}
+
+.terms input[type="checkbox"]:checked::after {
+  content: "✓";
+  color: #ffffff;
+  font-size: 12px;
+  position: absolute;
+  top: -1px;
+  left: 2px;
+}
+
+.terms a {
+  color: #2563eb;
+  text-decoration: none;
+}
+
+/* Button */
+.btn-primary {
+  width: 100%;
+  padding: 14px;
+  background-color: #2563eb;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #1d4ed8;
+}
+
+/* Sign in */
+.signin {
+  margin-top: 16px;
+  font-size: 14px;
+  color: #475569;
+}
+
+.signin a {
+  color: #2563eb;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.footer {
+  border-top: 1px solid #e5e7eb;
+  background: #fafafa;
+  padding: 20px 16px;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: auto;
+  text-align: center;
+  font-size: 12px;
+  color: #475569;
+}
+
+.footer-brand {
+  display: block;
+  font-weight: 700;
+  font-size: 14px;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+.footer-links {
+  margin-top: 8px;
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+}
+
+.footer-links a {
+  font-size: 12px;
+  color: #2563eb;
+  text-decoration: none;
+}
+
+.footer-links a:hover {
+  text-decoration: underline;
+}

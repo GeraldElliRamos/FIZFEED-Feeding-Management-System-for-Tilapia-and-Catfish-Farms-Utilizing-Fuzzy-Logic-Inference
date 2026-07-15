@@ -1,0 +1,204 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: system-ui, sans-serif;
+}
+
+body {
+  background: #f4f6fb;
+}
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ================= MAIN ================= */
+
+.dashboard-main {
+  flex: 1;
+  padding: 35px;
+}
+
+/* Header */
+
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+/* ✅ Dashboard Title Black */
+
+.top-header h1 {
+  font-size: 34px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.top-header p {
+  margin-top: 5px;
+  color: #666666;
+  font-size: 15px;
+}
+
+.color-icon {
+  color: #ffffff;
+}
+/* ================= SHARED STATS GRID ================= */
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  padding: 22px;
+  border-radius: 18px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 140px;
+}
+
+.stat-card h3 {
+  font-size: 28px;
+  font-weight: 700;
+   color: #ffffff;
+}
+
+.stat-card .label {
+  font-size: 15px;
+  opacity: 0.95;
+ color: #ffffff;
+}
+
+.stat-card span {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* COLORS */
+.stat-card.blue { background: #2563eb; }
+.stat-card.green { background: #10b981; }
+.stat-card.purple { background: #8b5cf6; }
+.stat-card.orange { background: #f97316; }
+.stat-card.red { background: #ef4444; }
+
+/* RESPONSIVE */
+@media (max-width: 1000px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ================= INFO CARD ================= */
+
+.info-card {
+  margin-top: 35px;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Farm Overview Title Black */
+
+.info-card h2 {
+  margin-bottom: 15px;
+  font-size: 24px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.info-card p {
+  line-height: 1.7;
+  color: #555555;
+  font-size: 15px;
+}
+
+/* ================= RESPONSIVE ================= */
+
+@media (max-width: 1000px) {
+  .stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 700px) {
+  .sidebar {
+    display: none;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-main {
+    padding: 20px;
+  }
+}
+
+.charts {
+  margin-top: 35px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 25px;
+}
+
+.chart-card {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+}
+
+.chart-card.small {
+  padding: 15px;
+}
+
+.chart-card h3 {
+  font-size: 16px;
+  margin-bottom: 10px;
+  color: #000;
+}
+
+/* 🔑 FIXED HEIGHTS */
+.chart-wrapper.large {
+  height: 240px;
+}
+
+.chart-wrapper.small {
+  height: 160px;
+}
+
+/* Doughnut center */
+.chart-wrapper.doughnut {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Force canvas to stay inside */
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 900px) {
+  .charts {
+    grid-template-columns: 1fr;
+  }
+}

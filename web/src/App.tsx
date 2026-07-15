@@ -1,122 +1,127 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import "./App.css";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Link,
+  useNavigate,
+} from "react-router-dom";
+import Signup from "./Signup";
+import Dashboard from "./Dashboard";
+import Schedule from "./Schedule";
+import Analytics from "./Analytics";
+import Notifications from "./Notifications";
+import AI_Recommendation from "./AI_Recommendation";
+import Devices from "./Devices";
+import Inventory from "./Inventory";
+import Profile from "./Profile";
 
-function App() {
-  const [count, setCount] = useState(0)
+/* ================= LOGIN ================= */
+function Login() {
+  const navigate = useNavigate();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+  
+    navigate("/dashboard");
+  };
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
+    <div className="app-container">
+        {/* ================= TOP NAVBAR ================= */}
+      <header className="top-navbar">
+        <div className="nav-left">
+          <img
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBZwXJ1Dj8t1Dl9_kNMyeYMnufW5igHVX-kUgbaUFiDjf6zcesivFSHfBtWk3K6xa_DvSY6lx_28wX3tmwnUhqpgS-sWI6ghllOxodNwqg-ab4L4asPXVd7AISlPq7OS953j3ecXAVh6Lhwyx4YRdhspIfsbIJNilPdMRENv4vmbH3yWc9G20Al4Gufe8rR4vTPNFfeyceXQpu6rjB434K6pSwajZlxsRk47LRRTQeLZ75BnX_wTZ0F6EFNcGIoDkVyJCEUpHkGEc"
+            alt="FIZFEED"
+            className="nav-logo"
+          />
+          <span className="nav-title">FIZFEED</span>
         </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
 
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+        <div className="nav-right">
+          <span className="nav-tagline">Aquatic Intelligence</span>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      </header>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {/* Main Content */}
+      <main className="main">
+        {/* Header */}
+        <header className="header">
+          <div className="logo-container">
+            <img
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBZwXJ1Dj8t1Dl9_kNMyeYMnufW5igHVX-kUgbaUFiDjf6zcesivFSHfBtWk3K6xa_DvSY6lx_28wX3tmwnUhqpgS-sWI6ghllOxodNwqg-ab4L4asPXVd7AISlPq7OS953j3ecXAVh6Lhwyx4YRdhspIfsbIJNilPdMRENv4vmbH3yWc9G20Al4Gufe8rR4vTPNFfeyceXQpu6rjB434K6pSwajZlxsRk47LRRTQeLZ75BnX_wTZ0F6EFNcGIoDkVyJCEUpHkGEc"
+              alt="FIZFEED Logo"
+            />
+          </div>
+
+          <h1>Welcome Back</h1>
+          <p>Monitor and optimize your feed efficiency</p>
+        </header>
+
+        {/* Login Card */}
+        <section className="login-card">
+          <form onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label>Email Address</label>
+              <input type="email" placeholder="you@example.com" />
+            </div>
+
+            <div className="form-group">
+              <label>Password</label>
+              <input type="password" placeholder="Enter your password" />
+            </div>
+
+            {/* OPTIONS */}
+            <div className="options">
+              <div className="remember">
+                <input type="checkbox" id="remember" />
+                <label htmlFor="remember">Remember me</label>
+              </div>
+
+              <a href="#" className="forgot">
+                Forgot password?
+              </a>
+            </div>
+
+            <button type="submit" className="btn-primary">
+              Sign In
+            </button>
+
+            <p className="signup">
+              Don't have an account? <Link to="/signup">Sign up</Link>
+            </p>
+          </form>
+        </section>
+
+        {/* FOOTER KEPT */}
+        <footer className="footer">
+          <p>Smart Feeding Optimization System</p>
+          <p>© 2025 FIZFEED - TIP Quezon City</p>
+        </footer>
+      </main>
+    </div>
+  );
 }
 
-export default App
+/* ================= APP ROUTER ================= */
+function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/schedule" element={<Schedule />} />
+        <Route path="/analytics" element={<Analytics />} />
+        <Route path="/notifications" element={<Notifications />} />
+        <Route path="/AI_Recommendation" element={<AI_Recommendation />} />
+        <Route path="/Devices" element={<Devices />} />
+        <Route path="/Inventory" element={<Inventory />} />
+            <Route path="/profile" element={<Profile />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+export default App;

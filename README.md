@@ -200,6 +200,23 @@ If you are working on mobile/Android development, set these environment variable
 
 After updating them, restart your terminal or VS Code.
 
+## Firebase Environment Variables
+
+The Firebase config is now read from environment variables instead of being hard-coded in source files.
+
+- Web app: copy [web/.env.example](web/.env.example) to `web/.env.local` and fill in your Firebase values.
+- Mobile app: copy [mobile/.env.example](mobile/.env.example) to `mobile/.env` or `mobile/.env.local` and fill in your Firebase values.
+
+Required values:
+
+- `VITE_FIREBASE_API_KEY` / `EXPO_PUBLIC_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN` / `EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID` / `EXPO_PUBLIC_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET` / `EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID` / `EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID` / `EXPO_PUBLIC_FIREBASE_APP_ID`
+- `VITE_FIREBASE_MEASUREMENT_ID` / `EXPO_PUBLIC_FIREBASE_MEASUREMENT_ID`
+
 ### Verify Android setup
 
 ```powershell

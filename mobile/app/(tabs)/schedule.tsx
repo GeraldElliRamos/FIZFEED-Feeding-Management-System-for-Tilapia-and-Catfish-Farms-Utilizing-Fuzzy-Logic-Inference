@@ -2,8 +2,12 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSchedules } from '../../hooks/useFirestore';
+import { doc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { useAuth } from '../../context/AuthContext';
 
 const colors = {
   primaryContainer: '#1a73e8',
@@ -99,8 +103,10 @@ function ScheduleCard({
 
 export default function ScheduleScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { schedules, loading } = useSchedules();
   const [currentDate] = useState(() => new Date());
-  const [schedules, setSchedules] = useState<ScheduleItem[]>([]);
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [scheduleTimeMenuOpen, setScheduleTimeMenuOpen] = useState(false);
   const [scheduleHour, setScheduleHour] = useState('');
@@ -116,44 +122,68 @@ export default function ScheduleScreen() {
     return { total: 'Pending', efficiency: schedules.length ? '94%' : '—' };
   }, [schedules]);
 
-  const toggleSchedule = (id: string) => {
-    setSchedules((current) =>
-      current.map((schedule) => (schedule.id === id ? { ...schedule, active: !schedule.active } : schedule))
-    );
+  const toggleSchedule = async (id: string) => {
+    if (!user) return;
+    const schedule = schedules.find(s => s.id === id);
+    if (!schedule) return;
+    try {
+      await updateDoc(doc(db, "users", user.uid, "schedules", id), {
+        enabled: !schedule.enabled
+      });
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const deleteSchedule = (id: string) => {
-    setSchedules((current) => current.filter((schedule) => schedule.id !== id));
+  const deleteSchedule = async (id: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "schedules", id));
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const addSchedule = () => {
+  const addSchedule = async () => {
     const pond = newPond.trim();
     const crop = newFishType.trim();
 
-    if (!scheduleHour || !scheduleMinute || !schedulePeriod || !pond || !crop) {
+    if (!scheduleHour || !scheduleMinute || !schedulePeriod || !pond || !crop || !user) {
       return;
     }
 
-    const time = `${scheduleHour}:${scheduleMinute} ${schedulePeriod}`;
-
-    setSchedules((current) => [
-      ...current,
-      {
-        id: `${Date.now()}-${current.length}`,
+    const time = `${scheduleHour}:${scheduleMinute}`;
+    
+    try {
+      await addDoc(collection(db, "users", user.uid, "schedules"), {
         time,
-        pond,
-        crop,
-        active: true,
-      },
-    ]);
-    setScheduleHour('');
-    setScheduleMinute('');
-    setSchedulePeriod('');
-    setNewPond('');
-    setNewFishType('');
-    setShowAddForm(false);
-    setFishMenuOpen(false);
+        period: schedulePeriod,
+        pondName: pond,
+        fishType: crop,
+        amountKg: 2.5,
+        status: "Scheduled",
+        enabled: true,
+        date: serverTimestamp()
+      });
+      setScheduleHour('');
+      setScheduleMinute('');
+      setSchedulePeriod('');
+      setNewPond('');
+      setNewFishType('');
+      setShowAddForm(false);
+      setFishMenuOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -204,7 +234,7 @@ export default function ScheduleScreen() {
           <View style={styles.list}>
             {schedules.length > 0 ? (
               schedules.map((item) => (
-                <ScheduleCard key={item.id} item={item} onToggle={toggleSchedule} onDelete={deleteSchedule} />
+                <ScheduleCard key={item.id} item={{ id: item.id, time: `${item.time} ${item.period}`, pond: item.pondName, crop: item.fishType, active: item.enabled !== false }} onToggle={toggleSchedule} onDelete={deleteSchedule} />
               ))
             ) : (
               <View style={styles.emptyState}>

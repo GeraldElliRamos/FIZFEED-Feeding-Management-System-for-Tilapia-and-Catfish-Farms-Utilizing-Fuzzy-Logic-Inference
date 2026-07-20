@@ -2,8 +2,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useUserProfile } from '../../hooks/useFirestore';
 
 const colors = {
   primary: '#005bbf',
@@ -50,9 +51,18 @@ function BottomNavItem({ icon, label, active, notification, onPress }: BottomNav
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { profile, loading } = useUserProfile();
   const currentDate = new Date();
   const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
   const [darkThemeEnabled, setDarkThemeEnabled] = useState(false);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -109,7 +119,7 @@ export default function ProfileScreen() {
                   <MaterialIcons name="photo_camera" size={18} color={colors.onSecondary} />
                 </Pressable>
               </View>
-              <Text style={styles.profileName}>Juan Dela Cruz</Text>
+              <Text style={styles.profileName}>{profile?.displayName || "Juan Dela Cruz"}</Text>
               <Text style={styles.profileSubtitle}>Farm Administrator</Text>
               <Pressable style={styles.editButton}>
                 <Text style={styles.editButtonText}>Edit Profile</Text>
@@ -145,8 +155,8 @@ export default function ProfileScreen() {
                 </View>
                 <View style={styles.listTextGroup}>
                   <Text style={styles.listLabel}>Farm Name</Text>
-                  <Text style={styles.listValue}>San Miguel Fish Farm</Text>
-                </View>
+                  <Text style={styles.listValue}>{profile?.farmName || "San Miguel Fish Farm"}</Text>
+                </View>>
                 <MaterialIcons name="chevron_right" size={20} color={colors.outlineVariant} />
               </Pressable>
               <View style={styles.divider} />
@@ -156,8 +166,8 @@ export default function ProfileScreen() {
                 </View>
                 <View style={styles.listTextGroup}>
                   <Text style={styles.listLabel}>Email</Text>
-                  <Text style={styles.listValue}>juan.delacruz@email.com</Text>
-                </View>
+                  <Text style={styles.listValue}>{profile?.email || "juan.delacruz@email.com"}</Text>
+                </View>>
                 <MaterialIcons name="chevron_right" size={20} color={colors.outlineVariant} />
               </Pressable>
               <View style={styles.divider} />
@@ -167,8 +177,8 @@ export default function ProfileScreen() {
                 </View>
                 <View style={styles.listTextGroup}>
                   <Text style={styles.listLabel}>Phone</Text>
-                  <Text style={styles.listValue}>+63 917 123 4567</Text>
-                </View>
+                  <Text style={styles.listValue}>{profile?.phone || "+63 917 123 4567"}</Text>
+                </View>>
                 <MaterialIcons name="chevron_right" size={20} color={colors.outlineVariant} />
               </Pressable>
               <View style={styles.divider} />
@@ -178,8 +188,8 @@ export default function ProfileScreen() {
                 </View>
                 <View style={styles.listTextGroup}>
                   <Text style={styles.listLabel}>Location</Text>
-                  <Text style={styles.listValue}>Bulacan, Philippines</Text>
-                </View>
+                  <Text style={styles.listValue}>{profile?.location || "Bulacan, Philippines"}</Text>
+                </View>>
                 <MaterialIcons name="chevron_right" size={20} color={colors.outlineVariant} />
               </Pressable>
             </View>

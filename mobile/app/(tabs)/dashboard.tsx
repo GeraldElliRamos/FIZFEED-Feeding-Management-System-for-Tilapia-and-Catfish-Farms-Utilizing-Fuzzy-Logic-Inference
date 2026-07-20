@@ -12,6 +12,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePonds, useSchedules } from '../../hooks/useFirestore';
+import { doc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { useAuth } from '../../context/AuthContext';
 
 const colors = {
   primaryContainer: '#1a73e8',
@@ -96,10 +100,14 @@ function NavButton({ icon, label, active, hasNotification, onPress }: NavButtonP
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { ponds } = usePonds();
+  const { schedules } = useSchedules();
+  
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [pondName, setPondName] = useState('');
   const [pondType, setPondType] = useState('');
-  const [ponds, setPonds] = useState<PondRecord[]>([]);
+  
   const [fishMenuOpen, setFishMenuOpen] = useState(false);
   const [scheduleTimeMenuOpen, setScheduleTimeMenuOpen] = useState(false);
   const [expandedPondId, setExpandedPondId] = useState<string | null>(null);
@@ -111,7 +119,7 @@ export default function DashboardScreen() {
   const [schedulePonds, setSchedulePonds] = useState('');
   const [scheduleFishType, setScheduleFishType] = useState('');
   const [scheduleFishMenuOpen, setScheduleFishMenuOpen] = useState(false);
-  const [schedules, setSchedules] = useState<ScheduleRecord[]>([]);
+  
   const hourOptions = Array.from({ length: 12 }, (_, hour) => String(hour + 1).padStart(2, '0'));
   const minuteOptions = Array.from({ length: 60 }, (_, minute) => String(minute).padStart(2, '0'));
 
@@ -123,23 +131,29 @@ export default function DashboardScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSavePond = () => {
+  const handleSavePond = async () => {
     const trimmedName = pondName.trim();
     const trimmedType = pondType.trim();
 
-    if (!trimmedName || !trimmedType) {
+    if (!trimmedName || !trimmedType || !user) {
       return;
     }
 
-    setPonds((currentPonds) => [
-      ...currentPonds,
-      { id: `${Date.now()}-${currentPonds.length}`, name: trimmedName, type: trimmedType },
-    ]);
-    setExpandedPondId(`${Date.now()}-${ponds.length}`);
-    setPondName('');
-    setPondType('');
-    setFishMenuOpen(false);
-    setShowPondForm(false);
+    try {
+      await addDoc(collection(db, "users", user.uid, "ponds"), {
+        name: trimmedName,
+        fishType: trimmedType,
+        capacity: 25,
+        currentStock: 0,
+        dailyUsage: 0
+      });
+      setPondName('');
+      setPondType('');
+      setFishMenuOpen(false);
+      setShowPondForm(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   const getPondSensors = (pond: PondRecord): PondSensor[] => [
@@ -149,34 +163,34 @@ export default function DashboardScreen() {
     { label: 'Last Feeding Time', value: '--', icon: 'schedule', color: colors.outline },
   ];
 
-  const handleSaveSchedule = () => {
+  const handleSaveSchedule = async () => {
     const trimmedPonds = schedulePonds.trim();
     const trimmedFishType = scheduleFishType.trim();
-    if (!scheduleHour || !scheduleMinute || !schedulePeriod) {
+    if (!scheduleHour || !scheduleMinute || !schedulePeriod || !trimmedPonds || !trimmedFishType || !user) {
       return;
     }
 
-    const trimmedTime = `${scheduleHour}:${scheduleMinute} ${schedulePeriod}`;
+    const trimmedTime = `${scheduleHour}:${scheduleMinute}`;
 
-    if (!trimmedPonds || !trimmedFishType) {
-      return;
-    }
-
-    setSchedules((currentSchedules) => [
-      ...currentSchedules,
-      {
-        id: `${Date.now()}-${currentSchedules.length}`,
+    try {
+      await addDoc(collection(db, "users", user.uid, "schedules"), {
         time: trimmedTime,
-        ponds: trimmedPonds,
-        feedWeight: trimmedFishType,
-        active: true,
-      },
-    ]);
-    setSchedulePonds('');
-    setScheduleFishType('');
-    setShowScheduleForm(false);
-    setScheduleTimeMenuOpen(false);
-    setScheduleFishMenuOpen(false);
+        period: schedulePeriod,
+        pondName: trimmedPonds,
+        fishType: trimmedFishType,
+        amountKg: 2.5,
+        status: "Scheduled",
+        enabled: true,
+        date: serverTimestamp()
+      });
+      setSchedulePonds('');
+      setScheduleFishType('');
+      setShowScheduleForm(false);
+      setScheduleTimeMenuOpen(false);
+      setScheduleFishMenuOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (

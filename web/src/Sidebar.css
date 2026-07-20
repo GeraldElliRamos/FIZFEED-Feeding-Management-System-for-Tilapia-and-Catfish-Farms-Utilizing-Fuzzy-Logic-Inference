@@ -2,31 +2,46 @@
 
 .sidebar {
   width: 250px;
+  flex: 0 0 250px;
+  position: sticky;
+  top: 0;
+  align-self: flex-start;
+  height: 100vh;
+  max-height: 100vh;
   background: #ffffff;
   border-right: 1px solid #dddddd;
   display: flex;
   flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
-.logo {
+.sidebar .logo {
   display: flex;
+  align-items: center;
   gap: 12px;
   padding: 20px;
 }
 
-.logo img {
+.sidebar .logo img {
   width: 42px;
   height: 42px;
+  flex: 0 0 42px;
+  object-fit: contain;
 }
 
-.logo h3 {
+.sidebar .logo h3 {
   font-size: 18px;
   color: #000;
+  line-height: 1.2;
+  margin: 0;
 }
 
-.logo p {
+.sidebar .logo p {
   font-size: 12px;
   color: #666;
+  line-height: 1.3;
+  margin: 2px 0 0;
 }
 
 .sidebar nav {
@@ -39,40 +54,74 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 15px 20px;
+  min-height: 48px;
+  padding: 12px 16px;
+  margin: 0 10px;
+  border-radius: 10px;
   cursor: pointer;
   text-decoration: none;
   color: #444;
-  transition: 0.3s;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar nav a svg {
+  flex: 0 0 auto;
+  font-size: 21px;
 }
 
 .sidebar nav a:hover {
   background: #eef4ff;
 }
 
-.sidebar nav .active {
+.sidebar nav a.active {
   background: #2563eb;
   color: #ffffff;
-  margin: 0 10px;
-  border-radius: 10px;
 }
 
 .sidebar-footer {
   margin-top: auto;
-  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 15px 0;
 }
 
 .sidebar-footer a {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px;
+  gap: 14px;
+  min-height: 50px;
+  padding: 0 20px;
+  cursor: pointer;
   text-decoration: none;
   color: #444;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.2;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-footer a svg {
+  flex: 0 0 auto;
+  font-size: 21px;
+}
+
+.sidebar-footer a:hover,
+.sidebar-footer a.active,
+.sidebar-footer .sidebar-help {
+  background: #f3f6fb;
+  color: #1f2937;
 }
 
 .logout {
   color: #dc2626 !important;
+}
+
+.logout:hover {
+  background: #fef2f2 !important;
 }
 
 /* RESPONSIVE */

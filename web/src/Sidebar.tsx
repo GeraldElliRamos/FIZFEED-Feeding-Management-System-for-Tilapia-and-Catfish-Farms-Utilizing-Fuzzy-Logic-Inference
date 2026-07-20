@@ -1,0 +1,76 @@
+import { NavLink, Link } from "react-router-dom";
+import {
+  MdDashboard,
+  MdSchedule,
+  MdAnalytics,
+  MdNotifications,
+  MdSmartToy,
+  MdDevices,
+  MdInventory,
+  MdHelpOutline,
+  MdPerson,
+  MdSettings,
+  MdLogout,
+} from "react-icons/md";
+import "./Sidebar.css";
+import { useUserProfile } from "./hooks/useFirestore";
+
+type Role = "admin" | "farm_owner" | "farm_staff" | "viewer";
+
+const navAccess: Record<string, Role[]> = {
+  "/dashboard": ["admin", "farm_owner", "farm_staff", "viewer"],
+  "/schedule": ["admin", "farm_owner", "farm_staff"],
+  "/analytics": ["admin", "farm_owner", "farm_staff", "viewer"],
+  "/notifications": ["admin", "farm_owner", "farm_staff", "viewer"],
+  "/ai_recommendation": ["admin", "farm_owner", "farm_staff", "viewer"],
+  "/devices": ["admin", "farm_owner"],
+  "/inventory": ["admin", "farm_owner"],
+  "/profile": ["admin", "farm_owner", "farm_staff", "viewer"],
+  "/settings": ["admin", "farm_owner"],
+};
+
+export default function Sidebar() {
+  const { profile } = useUserProfile();
+  const role = (String(profile?.role || "farm_owner") as Role);
+
+  const canAccess = (path: string) => navAccess[path]?.includes(role) ?? true;
+
+  return (
+    <aside className="sidebar">
+      <div className="logo">
+        <img
+          src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBZwXJ1Dj8t1Dl9_kNMyeYMnufW5igHVX-kUgbaUFiDjf6zcesivFSHfBtWk3K6xa_DvSY6lx_28wX3tmwnUhqpgS-sWI6ghllOxodNwqg-ab4L4asPXVd7AISlPq7OS953j3ecXAVh6Lhwyx4YRdhspIfsbIJNilPdMRENv4vmbH3yWc9G20Al4Gufe8rR4vTPNFfeyceXQpu6rjB434K6pSwajZlxsRk47LRRTQeLZ75BnX_wTZ0F6EFNcGIoDkVyJCEUpHkGEc"
+          alt="logo"
+        />
+        <div>
+          <h3>FIZFEED</h3>
+          <p>Smart Aquaculture</p>
+        </div>
+      </div>
+
+      <nav>
+        {canAccess("/dashboard") && <NavLink to="/dashboard" className={({ isActive }) => isActive ? "active" : ""}><MdDashboard /> Dashboard</NavLink>}
+        {canAccess("/schedule") && <NavLink to="/schedule" className={({ isActive }) => isActive ? "active" : ""}><MdSchedule /> Schedule</NavLink>}
+        {canAccess("/analytics") && <NavLink to="/analytics" className={({ isActive }) => isActive ? "active" : ""}><MdAnalytics /> Analytics</NavLink>}
+        {canAccess("/notifications") && <NavLink to="/notifications" className={({ isActive }) => isActive ? "active" : ""}><MdNotifications /> Notifications</NavLink>}
+        {canAccess("/ai_recommendation") && <NavLink to="/ai_recommendation" className={({ isActive }) => isActive ? "active" : ""}><MdSmartToy /> AI Recommendation</NavLink>}
+        {canAccess("/devices") && <NavLink to="/devices" className={({ isActive }) => isActive ? "active" : ""}><MdDevices /> Devices</NavLink>}
+        {canAccess("/inventory") && <NavLink to="/inventory" className={({ isActive }) => isActive ? "active" : ""}><MdInventory /> Inventory</NavLink>}
+      </nav>
+
+      <div className="sidebar-footer">
+        <a href="#help" className="sidebar-help"><MdHelpOutline /> Help</a>
+        <NavLink
+          to="/profile"
+          className={({ isActive }) => (isActive ? "active" : "")}
+        >
+          <MdPerson /> Profile
+        </NavLink>
+        {canAccess("/settings") && <NavLink to="/settings" className={({ isActive }) => (isActive ? "active" : "")}><MdSettings /> Settings</NavLink>}
+        <Link to="/" className="logout">
+          <MdLogout /> Logout
+        </Link>
+      </div>
+    </aside>
+  );
+}

@@ -1,19 +1,82 @@
 import "./Signup.css";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
 import { useState } from "react";
+import {
+  createUserWithEmailAndPassword,
+  updateProfile,
+} from "firebase/auth";
+import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { auth, db } from "./firebase";
+import { useAuth } from "./hooks/useAuth";
 
 function Signup() {
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
+  const { user, loading } = useAuth();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("farm_owner");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // If already logged in, redirect to dashboard
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/");
+    setError("");
+
+    if (!fullName.trim()) {
+      setError("Please enter your full name.");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      // Save the user's display name
+      await updateProfile(userCredential.user, {
+        displayName: fullName.trim(),
+      });
+      
+      const uid = userCredential.user.uid;
+      
+      // Create user document
+      await setDoc(doc(db, "users", uid), {
+        displayName: fullName.trim(),
+        email: email,
+        role,
+        farmName: "",
+        phone: "",
+        location: "",
+        createdAt: serverTimestamp()
+      });
+
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Signup error: ", err);
+      // Force displaying the exact error object so we can see what's wrong
+      setError(err instanceof Error ? err.message : JSON.stringify(err));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="signup-container">
-        {/* ================= TOP NAVBAR ================= */}
+      {/* ================= TOP NAVBAR ================= */}
       <header className="top-navbar">
         <div className="nav-left">
           <img
@@ -39,7 +102,6 @@ function Signup() {
             />
           </div>
 
-          {/* ✅ BLACK TITLE */}
           <h1>Create Account</h1>
 
           <p className="subtitle">
@@ -49,12 +111,28 @@ function Signup() {
           <form onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Full Name</label>
-              <input type="text" placeholder="Full Name" required />
+              <input
+                type="text"
+                placeholder="Full Name"
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={isSubmitting}
+                autoComplete="name"
+              />
             </div>
 
             <div className="form-group">
               <label>Email Address</label>
-              <input type="email" placeholder="name@company.com" required />
+              <input
+                type="email"
+                placeholder="name@company.com"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={isSubmitting}
+                autoComplete="email"
+              />
             </div>
 
             <div className="form-group password-group">
@@ -63,6 +141,10 @@ function Signup() {
                 type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={isSubmitting}
+                autoComplete="new-password"
               />
               <button
                 type="button"
@@ -73,7 +155,38 @@ function Signup() {
               </button>
             </div>
 
-            {/* ✅ WHITE CUSTOM CHECKBOX */}
+            <div className="form-group">
+              <label>Role</label>
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+                disabled={isSubmitting}
+              >
+                <option value="admin">Admin</option>
+                <option value="farm_owner">Farm Owner</option>
+                <option value="farm_staff">Farm Staff</option>
+                <option value="viewer">Viewer</option>
+              </select>
+            </div>
+
+            {/* Error Message */}
+            {error && (
+              <div
+                style={{
+                  background: "rgba(220,38,38,0.1)",
+                  border: "1px solid rgba(220,38,38,0.3)",
+                  color: "#dc2626",
+                  borderRadius: "8px",
+                  padding: "10px 14px",
+                  fontSize: "0.85rem",
+                  marginBottom: "8px",
+                }}
+              >
+                {error}
+              </div>
+            )}
+
+            {/* Terms Checkbox */}
             <div className="terms">
               <input type="checkbox" id="terms" required />
               <label htmlFor="terms">
@@ -82,8 +195,13 @@ function Signup() {
               </label>
             </div>
 
-            <button type="submit" className="btn-primary">
-              Create Account →
+            <button
+              type="submit"
+              className="btn-primary"
+              disabled={isSubmitting}
+              style={{ opacity: isSubmitting ? 0.7 : 1 }}
+            >
+              {isSubmitting ? "Creating Account..." : "Create Account →"}
             </button>
           </form>
 
@@ -94,7 +212,7 @@ function Signup() {
       </div>
 
       {/* Footer */}
-        <footer className="footer">
+      <footer className="footer">
         <div className="footer-content">
           <span className="footer-brand">FIZFEED</span>
           <p>© 2024 FIZFEED Aquatic Intelligence. All rights reserved.</p>
@@ -111,3 +229,4 @@ function Signup() {
 }
 
 export default Signup;
+

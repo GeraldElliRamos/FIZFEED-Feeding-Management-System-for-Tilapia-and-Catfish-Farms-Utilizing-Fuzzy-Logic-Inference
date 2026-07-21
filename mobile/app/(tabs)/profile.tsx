@@ -4,7 +4,8 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useUserProfile } from '../../hooks/useFirestore';
+import { useUserProfile, usePonds } from '../../hooks/useFirestore';
+import { useAuth } from '../../context/AuthContext';
 
 const colors = {
   primary: '#005bbf',
@@ -51,12 +52,18 @@ function BottomNavItem({ icon, label, active, notification, onPress }: BottomNav
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const { profile, loading } = useUserProfile();
+  const { ponds, loading: pondsLoading } = usePonds();
   const currentDate = new Date();
   const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
   const [darkThemeEnabled, setDarkThemeEnabled] = useState(false);
 
-  if (loading) {
+  const daysActive = user?.metadata?.creationTime
+    ? Math.max(1, Math.floor((currentDate.getTime() - new Date(user.metadata.creationTime).getTime()) / (1000 * 60 * 60 * 24)))
+    : 1;
+
+  if (loading || pondsLoading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -132,15 +139,15 @@ export default function ProfileScreen() {
             <Text style={styles.sectionTitle}>Farm Statistics</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{'3'}</Text>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{ponds.length}</Text>
                 <Text style={styles.statLabel}>Ponds</Text>
               </View>
               <View style={[styles.statCard, styles.statCardHighlighted]}>
-                <Text style={[styles.statValue, { color: colors.secondary }]}>{'3'}</Text>
+                <Text style={[styles.statValue, { color: colors.secondary }]}>{ponds.length}</Text>
                 <Text style={styles.statLabel}>Devices</Text>
               </View>
               <View style={styles.statCard}>
-                <Text style={[styles.statValue, { color: colors.tertiary }]}>{'94'}</Text>
+                <Text style={[styles.statValue, { color: colors.tertiary }]}>{daysActive}</Text>
                 <Text style={styles.statLabel}>Days</Text>
               </View>
             </View>
@@ -240,6 +247,7 @@ export default function ProfileScreen() {
           <BottomNavItem icon="home" label="Home" onPress={() => router.replace('/')} />
           <BottomNavItem icon="calendar-month" label="Schedule" onPress={() => router.replace('/schedule')} />
           <BottomNavItem icon="bar-chart" label="Analytics" onPress={() => router.replace('/analytics')} />
+          <BottomNavItem icon="auto-awesome" label="Insights" onPress={() => router.replace('/insights')} />
           <BottomNavItem icon="notifications" label="Alerts" onPress={() => router.replace('/alerts')} />
           <BottomNavItem icon="person" label="Profile" active />
         </View>

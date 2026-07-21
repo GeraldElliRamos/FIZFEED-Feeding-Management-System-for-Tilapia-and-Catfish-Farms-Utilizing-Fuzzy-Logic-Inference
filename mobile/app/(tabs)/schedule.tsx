@@ -273,7 +273,8 @@ export default function ScheduleScreen() {
         <View style={styles.bottomNav}>
           <BottomNavItem icon="home" label="Home" onPress={() => router.replace('/')} />
           <BottomNavItem icon="calendar-month" label="Schedule" active />
-          <BottomNavItem icon="bar-chart" label="Analytics" />
+          <BottomNavItem icon="bar-chart" label="Analytics" onPress={() => router.push('/analytics')} />
+          <BottomNavItem icon="auto-awesome" label="Insights" onPress={() => router.push('/insights')} />
           <BottomNavItem icon="notifications" label="Alerts" onPress={() => router.push('/alerts')} />
           <BottomNavItem icon="person" label="Profile" onPress={() => router.push('/profile')} />
         </View>

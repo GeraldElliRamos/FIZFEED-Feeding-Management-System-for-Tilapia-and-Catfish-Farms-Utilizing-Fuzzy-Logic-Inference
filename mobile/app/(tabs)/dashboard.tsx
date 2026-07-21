@@ -56,6 +56,7 @@ type PondRecord = {
   id: string;
   name: string;
   type: string;
+  isConnected?: boolean;
 };
 
 type PondSensor = {
@@ -131,6 +132,15 @@ export default function DashboardScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleDeletePond = async (pondId: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "ponds", pondId));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleSavePond = async () => {
     const trimmedName = pondName.trim();
     const trimmedType = pondType.trim();
@@ -145,7 +155,8 @@ export default function DashboardScreen() {
         fishType: trimmedType,
         capacity: 25,
         currentStock: 0,
-        dailyUsage: 0
+        dailyUsage: 0,
+        isConnected: false
       });
       setPondName('');
       setPondType('');
@@ -268,9 +279,21 @@ export default function DashboardScreen() {
                           </View>
                           <View style={styles.savedPondRightSide}>
                             <View style={styles.savedPondStatusPill}>
-                              <MaterialIcons name="wifi" size={12} color={colors.onSurfaceVariant} />
-                              <Text style={styles.savedPondStatusText}>Online</Text>
+                              <MaterialIcons 
+                                name={pond.isConnected === false ? 'wifi-off' : 'wifi'} 
+                                size={12} 
+                                color={pond.isConnected === false ? colors.error : colors.onSurfaceVariant} 
+                              />
+                              <Text style={[
+                                styles.savedPondStatusText,
+                                pond.isConnected === false && { color: colors.error }
+                              ]}>
+                                {pond.isConnected === false ? 'Offline' : 'Online'}
+                              </Text>
                             </View>
+                            <Pressable onPress={() => handleDeletePond(pond.id)}>
+                              <MaterialIcons name="delete-outline" size={20} color={colors.error} style={{ marginHorizontal: 6 }} />
+                            </Pressable>
                             <MaterialIcons
                               name={expandedPondId === pond.id ? 'expand-less' : 'expand-more'}
                               size={20}
@@ -541,7 +564,8 @@ export default function DashboardScreen() {
         <View style={styles.bottomNav}>
           <NavButton icon="home" label="Home" active />
           <NavButton icon="calendar-month" label="Schedule" onPress={() => router.push('/schedule')} />
-          <NavButton icon="bar-chart" label="Analytics" />
+          <NavButton icon="bar-chart" label="Analytics" onPress={() => router.push('/analytics')} />
+          <NavButton icon="auto-awesome" label="Insights" onPress={() => router.push('/insights')} />
           <NavButton icon="notifications" label="Alerts" onPress={() => router.push('/alerts')} />
           <NavButton icon="person" label="Profile" onPress={() => router.push('/profile')} />
         </View>

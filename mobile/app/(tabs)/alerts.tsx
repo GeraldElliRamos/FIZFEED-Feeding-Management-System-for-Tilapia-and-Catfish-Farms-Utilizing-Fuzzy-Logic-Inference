@@ -257,7 +257,8 @@ export default function AlertsScreen() {
         <View style={styles.bottomNav}>
           <NavButton icon="home" label="Home" onPress={() => router.push('/')} />
           <NavButton icon="calendar-month" label="Schedule" onPress={() => router.push('/schedule')} />
-          <NavButton icon="bar-chart" label="Analytics" />
+          <NavButton icon="bar-chart" label="Analytics" onPress={() => router.push('/analytics')} />
+          <NavButton icon="auto-awesome" label="Insights" onPress={() => router.push('/insights')} />
           <NavButton icon="notifications" label="Alerts" active />
           <NavButton icon="person" label="Profile" onPress={() => router.push('/profile')} />
         </View>

@@ -1,16 +1,8 @@
+import Sidebar from "./Sidebar";
 import "./Profile.css";
 import "./Sidebar.css";
-import { NavLink, Link } from "react-router-dom";
 import {
-  MdDashboard,
-  MdSchedule,
-  MdAnalytics,
-  MdNotifications,
-  MdDevices,
-  MdInventory,
-  MdHelpOutline,
   MdPerson,
-  MdLogout,
   MdAdd,
   MdChevronRight,
   MdSettings,
@@ -23,60 +15,23 @@ import {
 
 } from "react-icons/md";
 
+import { useDevices, usePonds, useUserProfile } from "./hooks/useFirestore";
+
 function Profile() {
+  const { profile, loading } = useUserProfile();
+  const { ponds } = usePonds();
+  const { devices } = useDevices();
+  const createdAt = profile?.createdAt?.toDate?.();
+  const daysActive = createdAt ? Math.max(0, Math.floor((Date.now() - createdAt.getTime()) / 86400000)) : null;
+
+  if (loading) {
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#0a192f', color: '#fff' }}>Loading profile...</div>;
+  }
+
   return (
     <div className="dashboard-layout">
       {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="logo">
-          <img
-            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBZwXJ1Dj8t1Dl9_kNMyeYMnufW5igHVX-kUgbaUFiDjf6zcesivFSHfBtWk3K6xa_DvSY6lx_28wX3tmwnUhqpgS-sWI6ghllOxodNwqg-ab4L4asPXVd7AISlPq7OS953j3ecXAVh6Lhwyx4YRdhspIfsbIJNilPdMRENv4vmbH3yWc9G20Al4Gufe8rR4vTPNFfeyceXQpu6rjB434K6pSwajZlxsRk47LRRTQeLZ75BnX_wTZ0F6EFNcGIoDkVyJCEUpHkGEc"
-            alt="logo"
-          />
-          <div>
-            <h3>FIZFEED</h3>
-            <p>Smart Aquaculture</p>
-          </div>
-        </div>
-
-       <nav>
-    <NavLink to="/dashboard" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdDashboard /> Dashboard
-    </NavLink>
-    <NavLink to="/schedule" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdSchedule /> Schedule
-    </NavLink>
-    <NavLink to="/analytics" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdAnalytics /> Analytics
-    </NavLink>
-    <NavLink to="/notifications" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdNotifications /> Notifications
-    </NavLink>
-     <NavLink to="/ai_recommendation" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdNotifications /> AI Recommendation
-    </NavLink>
-      <NavLink to="/devices" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdDevices /> Devices
-    </NavLink>
-    <NavLink to="/inventory" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdInventory /> Inventory
-    </NavLink>
-  </nav>
-
-
-        <div className="sidebar-footer">
-          <a><MdHelpOutline /> Help</a>
-        <NavLink
-    to="/profile"
-    className={({ isActive }) => (isActive ? "active" : "")}
-  >
-    <MdPerson /> Profile
-  </NavLink>
-          <Link to="/" className="logout">
-            <MdLogout /> Logout
-          </Link>
-        </div>
-      </aside>
+      <Sidebar />
 
       {/* MAIN */}
       <main className="dashboard-main">
@@ -106,8 +61,8 @@ function Profile() {
           </div>
 
           <div>
-            <h2>Juan Dela Cruz</h2>
-            <p>Fish Farmer</p>
+            <h2>{profile?.displayName}</h2>
+            <p>{profile?.role ? String(profile.role).replace(/_/g, " ") : "Fish Farmer"}</p>
           </div>
 
         </section>
@@ -129,7 +84,7 @@ function Profile() {
 
               <div>
                 <span>Farm Name</span>
-                <h4>San Miguel Fish Farm</h4>
+                <h4>{profile?.farmName || "Not set"}</h4>
               </div>
             </div>
 
@@ -140,7 +95,18 @@ function Profile() {
 
               <div>
                 <span>Email</span>
-                <h4>juan.delacruz@email.com</h4>
+                <h4>{profile?.email}</h4>
+              </div>
+            </div>
+
+            <div className="info-item">
+              <div className="icon purple">
+                <MdVerified />
+              </div>
+
+              <div>
+                <span>Role</span>
+                <h4>{profile?.role ? String(profile.role).replace(/_/g, " ") : "Not set"}</h4>
               </div>
             </div>
 
@@ -151,7 +117,7 @@ function Profile() {
 
               <div>
                 <span>Phone</span>
-                <h4>+63 917 123 4567</h4>
+                <h4>{profile?.phone || "Not set"}</h4>
               </div>
             </div>
 
@@ -162,7 +128,7 @@ function Profile() {
 
               <div>
                 <span>Location</span>
-                <h4>Bulacan, Philippines</h4>
+                <h4>{profile?.location || "Not set"}</h4>
               </div>
             </div>
 
@@ -177,17 +143,17 @@ function Profile() {
             <div className="stats-grid">
 
               <div className="stat-box">
-                <h2>3</h2>
+                <h2>{ponds.length}</h2>
                 <p>Active Ponds</p>
               </div>
 
               <div className="stat-box">
-                <h2>3</h2>
+                <h2>{devices.length}</h2>
                 <p>Devices</p>
               </div>
 
               <div className="stat-box">
-                <h2>94</h2>
+                <h2>{daysActive ?? "--"}</h2>
                 <p>Days Active</p>
               </div>
 

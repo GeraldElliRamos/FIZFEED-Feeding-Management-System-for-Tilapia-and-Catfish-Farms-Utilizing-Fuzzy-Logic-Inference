@@ -1,13 +1,37 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
 import { HapticTab } from '@/components/haptic-tab';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
 import designTokens from '@/constants/design-tokens';
+import { useUserProfile } from '../../hooks/useFirestore';
 
 const { colors, fontSize, fontFamily } = designTokens;
 
+type Role = 'admin' | 'farm_owner' | 'farm_staff' | 'viewer';
+
+const tabAccess: Record<string, Role[]> = {
+  index: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
+  schedule: ['admin', 'farm_owner', 'farm_staff'],
+  analytics: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
+  insights: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
+  alerts: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
+  profile: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
+};
+
 export default function TabLayout() {
+  const { profile, loading } = useUserProfile();
+  const role = (String(profile?.role || 'farm_owner') as Role);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <Tabs
       screenOptions={{
@@ -44,41 +68,12 @@ export default function TabLayout() {
           // marginBottom: -3,
         },
       }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="schedule"
-        options={{
-          title: 'Schedule',
-          tabBarIcon: ({ color }) => <MaterialIcons name="calendar-month" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="analytics"
-        options={{
-          title: 'Analytics',
-          tabBarIcon: ({ color }) => <MaterialIcons name="bar-chart" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="alerts"
-        options={{
-          title: 'Alerts',
-          tabBarIcon: ({ color }) => <MaterialIcons name="notifications" size={24} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color }) => <MaterialIcons name="person" size={24} color={color} />,
-        }}
-      />
+      {tabAccess.index.includes(role) && <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} /> }} />}
+      {tabAccess.schedule.includes(role) && <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: ({ color }) => <MaterialIcons name="calendar-month" size={24} color={color} /> }} />}
+      {tabAccess.analytics.includes(role) && <Tabs.Screen name="analytics" options={{ title: 'Analytics', tabBarIcon: ({ color }) => <MaterialIcons name="bar-chart" size={24} color={color} /> }} />}
+      {tabAccess.insights.includes(role) && <Tabs.Screen name="insights" options={{ title: 'Insights', tabBarIcon: ({ color }) => <MaterialIcons name="auto-awesome" size={24} color={color} /> }} />}
+      {tabAccess.alerts.includes(role) && <Tabs.Screen name="alerts" options={{ title: 'Alerts', tabBarIcon: ({ color }) => <MaterialIcons name="notifications" size={24} color={color} /> }} />}
+      {tabAccess.profile.includes(role) && <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => <MaterialIcons name="person" size={24} color={color} /> }} />}
     </Tabs>
   );
 }

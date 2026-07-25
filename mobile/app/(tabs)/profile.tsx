@@ -2,8 +2,13 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useUserProfile, usePonds } from '../../hooks/useFirestore';
+import { useAuth } from '../../context/AuthContext';
+import { signOut } from 'firebase/auth';
+import { auth, db } from '../../firebase';
+import { doc, updateDoc } from 'firebase/firestore';
 
 const colors = {
   primary: '#005bbf',
@@ -50,9 +55,126 @@ function BottomNavItem({ icon, label, active, notification, onPress }: BottomNav
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { profile, loading } = useUserProfile();
+  const { ponds, loading: pondsLoading } = usePonds();
   const currentDate = new Date();
   const [pushNotificationsEnabled, setPushNotificationsEnabled] = useState(true);
-  const [darkThemeEnabled, setDarkThemeEnabled] = useState(false);
+
+  // Edit Profile Modal
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editFarmName, setEditFarmName] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editLocation, setEditLocation] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Edit Single Field Modal
+  const [fieldModalVisible, setFieldModalVisible] = useState(false);
+  const [fieldModalLabel, setFieldModalLabel] = useState('');
+  const [fieldModalKey, setFieldModalKey] = useState('');
+  const [fieldModalValue, setFieldModalValue] = useState('');
+
+  const daysActive = user?.metadata?.creationTime
+    ? Math.max(1, Math.floor((currentDate.getTime() - new Date(user.metadata.creationTime).getTime()) / (1000 * 60 * 60 * 24)))
+    : 1;
+
+  if (loading || pondsLoading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  const handleSignOut = async () => {
+    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Sign Out',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await signOut(auth);
+            router.replace('/login');
+          } catch (err) {
+            console.error('Sign out error:', err);
+          }
+        },
+      },
+    ]);
+  };
+
+  const openEditProfile = () => {
+    setEditName(profile?.displayName || '');
+    setEditFarmName(profile?.farmName || '');
+    setEditPhone(profile?.phone || '');
+    setEditLocation(profile?.location || '');
+    setEditModalVisible(true);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        displayName: editName.trim(),
+        farmName: editFarmName.trim(),
+        phone: editPhone.trim(),
+        location: editLocation.trim(),
+      });
+      Alert.alert('Success', 'Profile updated successfully!');
+      setEditModalVisible(false);
+    } catch (err) {
+      console.error('Update error:', err);
+      Alert.alert('Error', 'Failed to update profile. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const openFieldEdit = (label: string, key: string, currentValue: string) => {
+    setFieldModalLabel(label);
+    setFieldModalKey(key);
+    setFieldModalValue(currentValue);
+    setFieldModalVisible(true);
+  };
+
+  const handleSaveField = async () => {
+    if (!user) return;
+    setIsSaving(true);
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, { [fieldModalKey]: fieldModalValue.trim() });
+      Alert.alert('Updated', `${fieldModalLabel} has been updated.`);
+      setFieldModalVisible(false);
+    } catch (err) {
+      console.error('Field update error:', err);
+      Alert.alert('Error', `Failed to update ${fieldModalLabel}.`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCameraPress = () => {
+    Alert.alert('Change Profile Photo', 'Choose an option:', [
+      { text: 'Take Photo', onPress: () => Alert.alert('Camera', 'Camera integration requires expo-image-picker to be installed.') },
+      { text: 'Choose from Gallery', onPress: () => Alert.alert('Gallery', 'Gallery integration requires expo-image-picker to be installed.') },
+      { text: 'Cancel', style: 'cancel' },
+    ]);
+  };
+
+  const handleNotificationToggle = () => {
+    const newVal = !pushNotificationsEnabled;
+    setPushNotificationsEnabled(newVal);
+    Alert.alert(
+      newVal ? 'Notifications Enabled' : 'Notifications Disabled',
+      newVal
+        ? 'You will receive feeding alerts and sensor notifications.'
+        : 'You will no longer receive push notifications.'
+    );
+  };
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -70,7 +192,7 @@ export default function ProfileScreen() {
               </View>
               <Text style={styles.brandText}>FIZFEED</Text>
             </View>
-            <Pressable style={styles.menuButton}>
+            <Pressable style={styles.menuButton} onPress={() => router.replace('/(tabs)')}>
               <MaterialIcons name="menu" size={22} color={colors.onPrimary} />
             </Pressable>
           </View>
@@ -105,13 +227,13 @@ export default function ProfileScreen() {
                 <View style={styles.avatarCircle}>
                   <MaterialIcons name="person" size={48} color={colors.primary} />
                 </View>
-                <Pressable style={styles.cameraButton}>
+                <Pressable style={styles.cameraButton} onPress={handleCameraPress}>
                   <MaterialIcons name="photo_camera" size={18} color={colors.onSecondary} />
                 </Pressable>
               </View>
-              <Text style={styles.profileName}>Juan Dela Cruz</Text>
+              <Text style={styles.profileName}>{profile?.displayName || "Juan Dela Cruz"}</Text>
               <Text style={styles.profileSubtitle}>Farm Administrator</Text>
-              <Pressable style={styles.editButton}>
+              <Pressable style={styles.editButton} onPress={openEditProfile}>
                 <Text style={styles.editButtonText}>Edit Profile</Text>
                 <MaterialIcons name="edit" size={16} color={colors.onPrimary} />
               </Pressable>
@@ -122,15 +244,15 @@ export default function ProfileScreen() {
             <Text style={styles.sectionTitle}>Farm Statistics</Text>
             <View style={styles.statsGrid}>
               <View style={styles.statCard}>
-                <Text style={[styles.statValue, { color: colors.primary }]}>{'3'}</Text>
+                <Text style={[styles.statValue, { color: colors.primary }]}>{ponds.length}</Text>
                 <Text style={styles.statLabel}>Ponds</Text>
               </View>
               <View style={[styles.statCard, styles.statCardHighlighted]}>
-                <Text style={[styles.statValue, { color: colors.secondary }]}>{'3'}</Text>
+                <Text style={[styles.statValue, { color: colors.secondary }]}>{ponds.length}</Text>
                 <Text style={styles.statLabel}>Devices</Text>
               </View>
               <View style={styles.statCard}>
-                <Text style={[styles.statValue, { color: colors.tertiary }]}>{'94'}</Text>
+                <Text style={[styles.statValue, { color: colors.tertiary }]}>{daysActive}</Text>
                 <Text style={styles.statLabel}>Days</Text>
               </View>
             </View>
@@ -139,48 +261,48 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Account Information</Text>
             <View style={styles.listCard}>
-              <Pressable style={styles.listRow}>
-                <View style={[styles.iconBox, { backgroundColor: '#d8e2ff' }]}> 
-                  <MaterialIcons name="corporate_fare" size={20} color={colors.primary} />
+              <Pressable style={styles.listRow} onPress={() => openFieldEdit('Farm Name', 'farmName', profile?.farmName || '')}>
+                <View style={[styles.iconBox, { backgroundColor: '#d8e2ff' }]}>
+                  <MaterialIcons name="corporate-fare" size={20} color={colors.primary} />
                 </View>
                 <View style={styles.listTextGroup}>
                   <Text style={styles.listLabel}>Farm Name</Text>
-                  <Text style={styles.listValue}>San Miguel Fish Farm</Text>
+                  <Text style={styles.listValue}>{profile?.farmName || "San Miguel Fish Farm"}</Text>
                 </View>
-                <MaterialIcons name="chevron_right" size={20} color={colors.outlineVariant} />
+                <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />
               </Pressable>
               <View style={styles.divider} />
-              <Pressable style={styles.listRow}>
-                <View style={[styles.iconBox, { backgroundColor: '#e6f4f1' }]}> 
+              <Pressable style={styles.listRow} onPress={() => Alert.alert('Email', `Your email is ${profile?.email || user?.email || 'N/A'}.\n\nEmail changes require re-authentication for security.`)}>
+                <View style={[styles.iconBox, { backgroundColor: '#e6f4f1' }]}>
                   <MaterialIcons name="mail" size={20} color={colors.tertiary} />
                 </View>
                 <View style={styles.listTextGroup}>
                   <Text style={styles.listLabel}>Email</Text>
-                  <Text style={styles.listValue}>juan.delacruz@email.com</Text>
+                  <Text style={styles.listValue}>{profile?.email || "juan.delacruz@email.com"}</Text>
                 </View>
-                <MaterialIcons name="chevron_right" size={20} color={colors.outlineVariant} />
+                <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />
               </Pressable>
               <View style={styles.divider} />
-              <Pressable style={styles.listRow}>
-                <View style={[styles.iconBox, { backgroundColor: '#adc7ff' }]}> 
+              <Pressable style={styles.listRow} onPress={() => openFieldEdit('Phone', 'phone', profile?.phone || '')}>
+                <View style={[styles.iconBox, { backgroundColor: '#adc7ff' }]}>
                   <MaterialIcons name="call" size={20} color={colors.secondary} />
                 </View>
                 <View style={styles.listTextGroup}>
                   <Text style={styles.listLabel}>Phone</Text>
-                  <Text style={styles.listValue}>+63 917 123 4567</Text>
+                  <Text style={styles.listValue}>{profile?.phone || "+63 917 123 4567"}</Text>
                 </View>
-                <MaterialIcons name="chevron_right" size={20} color={colors.outlineVariant} />
+                <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />
               </Pressable>
               <View style={styles.divider} />
-              <Pressable style={styles.listRow}>
-                <View style={[styles.iconBox, { backgroundColor: '#fff1d6' }]}> 
-                  <MaterialIcons name="location_on" size={20} color="#b45309" />
+              <Pressable style={styles.listRow} onPress={() => openFieldEdit('Location', 'location', profile?.location || '')}>
+                <View style={[styles.iconBox, { backgroundColor: '#fff1d6' }]}>
+                  <MaterialIcons name="location-on" size={20} color="#b45309" />
                 </View>
                 <View style={styles.listTextGroup}>
                   <Text style={styles.listLabel}>Location</Text>
-                  <Text style={styles.listValue}>Bulacan, Philippines</Text>
+                  <Text style={styles.listValue}>{profile?.location || "Bulacan, Philippines"}</Text>
                 </View>
-                <MaterialIcons name="chevron_right" size={20} color={colors.outlineVariant} />
+                <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />
               </Pressable>
             </View>
           </View>
@@ -188,10 +310,7 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>App Settings</Text>
             <View style={styles.listCard}>
-              <Pressable
-                style={styles.listRow}
-                onPress={() => setPushNotificationsEnabled((current) => !current)}
-              >
+              <Pressable style={styles.listRow} onPress={handleNotificationToggle}>
                 <View style={styles.settingRowLeft}>
                   <MaterialIcons name="notifications" size={20} color={colors.onSurfaceVariant} />
                   <Text style={styles.listValue}>Push Notifications</Text>
@@ -201,22 +320,28 @@ export default function ProfileScreen() {
                 </View>
               </Pressable>
               <View style={styles.divider} />
-              <Pressable style={styles.listRow} onPress={() => setDarkThemeEnabled((current) => !current)}>
+              <Pressable style={styles.listRow} onPress={() => router.push('/settings')}>
                 <View style={styles.settingRowLeft}>
-                  <MaterialIcons name="dark_mode" size={20} color={colors.onSurfaceVariant} />
-                  <Text style={styles.listValue}>Dark Theme</Text>
+                  <MaterialIcons name="settings" size={20} color={colors.onSurfaceVariant} />
+                  <Text style={styles.listValue}>Settings</Text>
                 </View>
-                <View style={[styles.toggleTrack, darkThemeEnabled && styles.toggleTrackActive, !darkThemeEnabled && styles.toggleTrackOff]}>
-                  <View style={[styles.toggleThumb, darkThemeEnabled && styles.toggleThumbActive]} />
-                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />
               </Pressable>
               <View style={styles.divider} />
-              <Pressable style={styles.listRow}>
-                <View style={styles.settingRowLeft}> 
+              <Pressable style={styles.listRow} onPress={() => router.push('/faq')}>
+                <View style={styles.settingRowLeft}>
+                  <MaterialIcons name="help-outline" size={20} color={colors.onSurfaceVariant} />
+                  <Text style={styles.listValue}>FAQ</Text>
+                </View>
+                <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />
+              </Pressable>
+              <View style={styles.divider} />
+              <Pressable style={styles.listRow} onPress={handleSignOut}>
+                <View style={styles.settingRowLeft}>
                   <MaterialIcons name="logout" size={20} color={colors.error} />
                   <Text style={[styles.listValue, { color: colors.error }]}>Sign Out</Text>
                 </View>
-                <MaterialIcons name="chevron_right" size={20} color={colors.outlineVariant} />
+                <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />
               </Pressable>
             </View>
           </View>
@@ -226,10 +351,79 @@ export default function ProfileScreen() {
           </View>
         </ScrollView>
 
+        {/* ── Edit Profile Modal ─────────────────────────────────── */}
+        <Modal visible={editModalVisible} transparent animationType="slide">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Edit Profile</Text>
+                <Pressable onPress={() => setEditModalVisible(false)} hitSlop={12}>
+                  <MaterialIcons name="close" size={24} color={colors.onSurfaceVariant} />
+                </Pressable>
+              </View>
+
+              <ScrollView showsVerticalScrollIndicator={false}>
+                <View style={styles.modalField}>
+                  <Text style={styles.modalLabel}>Full Name</Text>
+                  <TextInput style={styles.modalInput} value={editName} onChangeText={setEditName} placeholder="Full Name" placeholderTextColor="#94a3b8" />
+                </View>
+                <View style={styles.modalField}>
+                  <Text style={styles.modalLabel}>Farm Name</Text>
+                  <TextInput style={styles.modalInput} value={editFarmName} onChangeText={setEditFarmName} placeholder="Farm Name" placeholderTextColor="#94a3b8" />
+                </View>
+                <View style={styles.modalField}>
+                  <Text style={styles.modalLabel}>Phone</Text>
+                  <TextInput style={styles.modalInput} value={editPhone} onChangeText={setEditPhone} placeholder="+63 917 123 4567" keyboardType="phone-pad" placeholderTextColor="#94a3b8" />
+                </View>
+                <View style={styles.modalField}>
+                  <Text style={styles.modalLabel}>Location / Address</Text>
+                  <TextInput style={styles.modalInput} value={editLocation} onChangeText={setEditLocation} placeholder="City, Province" placeholderTextColor="#94a3b8" />
+                </View>
+              </ScrollView>
+
+              <View style={styles.modalActions}>
+                <Pressable style={styles.modalCancelBtn} onPress={() => setEditModalVisible(false)}>
+                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                </Pressable>
+                <Pressable style={[styles.modalSaveBtn, isSaving && { opacity: 0.6 }]} onPress={handleSaveProfile} disabled={isSaving}>
+                  {isSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.modalSaveBtnText}>Save Changes</Text>}
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ── Edit Single Field Modal ────────────────────────────── */}
+        <Modal visible={fieldModalVisible} transparent animationType="fade">
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalCard}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Edit {fieldModalLabel}</Text>
+                <Pressable onPress={() => setFieldModalVisible(false)} hitSlop={12}>
+                  <MaterialIcons name="close" size={24} color={colors.onSurfaceVariant} />
+                </Pressable>
+              </View>
+              <View style={styles.modalField}>
+                <Text style={styles.modalLabel}>{fieldModalLabel}</Text>
+                <TextInput style={styles.modalInput} value={fieldModalValue} onChangeText={setFieldModalValue} placeholder={`Enter ${fieldModalLabel.toLowerCase()}`} placeholderTextColor="#94a3b8" autoFocus />
+              </View>
+              <View style={styles.modalActions}>
+                <Pressable style={styles.modalCancelBtn} onPress={() => setFieldModalVisible(false)}>
+                  <Text style={styles.modalCancelBtnText}>Cancel</Text>
+                </Pressable>
+                <Pressable style={[styles.modalSaveBtn, isSaving && { opacity: 0.6 }]} onPress={handleSaveField} disabled={isSaving}>
+                  {isSaving ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.modalSaveBtnText}>Save</Text>}
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
         <View style={styles.bottomNav}>
-          <BottomNavItem icon="home" label="Home" onPress={() => router.replace('/')} />
+          <BottomNavItem icon="home" label="Home" onPress={() => router.replace('/(tabs)')} />
           <BottomNavItem icon="calendar-month" label="Schedule" onPress={() => router.replace('/schedule')} />
           <BottomNavItem icon="bar-chart" label="Analytics" onPress={() => router.replace('/analytics')} />
+          <BottomNavItem icon="auto-awesome" label="Insights" onPress={() => router.replace('/insights')} />
           <BottomNavItem icon="notifications" label="Alerts" onPress={() => router.replace('/alerts')} />
           <BottomNavItem icon="person" label="Profile" active />
         </View>
@@ -288,17 +482,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  logoContainer: {
-    width: 20,
-    height: 20,
-    borderRadius: 5,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  logo: {
-    width: 20,
-    height: 20,
   },
   brandText: {
     color: colors.onPrimary,
@@ -414,9 +597,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 16,
     backgroundColor: colors.primary,
-  },
-  editButtonIconSpacing: {
-    marginLeft: 8,
+    gap: 8,
   },
   editButtonText: {
     color: colors.onPrimary,
@@ -545,6 +726,88 @@ const styles = StyleSheet.create({
     color: colors.outline,
     fontSize: 12,
   },
+  // ── Modal styles ──────────────────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxHeight: '80%',
+    backgroundColor: '#ffffff',
+    borderRadius: 24,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: colors.onSurface,
+  },
+  modalField: {
+    marginBottom: 16,
+  },
+  modalLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: colors.outline,
+    marginBottom: 6,
+  },
+  modalInput: {
+    borderWidth: 1.5,
+    borderColor: colors.outlineVariant,
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    fontSize: 15,
+    color: colors.onSurface,
+    backgroundColor: colors.surfaceLow,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalCancelBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    backgroundColor: colors.surfaceHigh,
+  },
+  modalCancelBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.onSurfaceVariant,
+  },
+  modalSaveBtn: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 14,
+    backgroundColor: colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 100,
+  },
+  modalSaveBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  // ── Bottom nav ────────────────────────────────────────────
   bottomNav: {
     position: 'absolute',
     left: 0,

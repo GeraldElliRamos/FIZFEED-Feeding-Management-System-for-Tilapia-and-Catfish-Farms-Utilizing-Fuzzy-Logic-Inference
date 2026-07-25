@@ -65,6 +65,8 @@
   display: flex;
   justify-content: center;
   align-items: center;
+  padding: 32px 16px;
+  overflow-y: auto;
 }
 
 /* Card */

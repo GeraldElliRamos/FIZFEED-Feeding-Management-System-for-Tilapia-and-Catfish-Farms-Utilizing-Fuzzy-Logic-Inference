@@ -201,7 +201,7 @@ export default function AlertsScreen() {
                 </View>
                 <Text style={styles.brandText}>FIZFEED</Text>
               </View>
-              <Pressable style={styles.menuButton}>
+              <Pressable style={styles.menuButton} onPress={() => router.push('/profile')}>
                 <MaterialIcons name="menu" size={22} color={colors.onPrimary} />
               </Pressable>
             </View>
@@ -255,9 +255,10 @@ export default function AlertsScreen() {
         </ScrollView>
 
         <View style={styles.bottomNav}>
-          <NavButton icon="home" label="Home" onPress={() => router.push('/')} />
+          <NavButton icon="home" label="Home" onPress={() => router.replace('/(tabs)')} />
           <NavButton icon="calendar-month" label="Schedule" onPress={() => router.push('/schedule')} />
-          <NavButton icon="bar-chart" label="Analytics" />
+          <NavButton icon="bar-chart" label="Analytics" onPress={() => router.push('/analytics')} />
+          <NavButton icon="auto-awesome" label="Insights" onPress={() => router.push('/insights')} />
           <NavButton icon="notifications" label="Alerts" active />
           <NavButton icon="person" label="Profile" onPress={() => router.push('/profile')} />
         </View>

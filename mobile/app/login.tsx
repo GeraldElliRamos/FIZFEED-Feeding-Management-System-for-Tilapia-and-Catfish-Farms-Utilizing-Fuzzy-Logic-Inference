@@ -1,7 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { signInWithEmailAndPassword, AuthError } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
+  Alert,
   Image,
   Pressable,
   StyleSheet,
@@ -9,16 +11,51 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ActivityIndicator,
 } from 'react-native';
+import { auth } from '../firebase';
+
+const getFriendlyError = (code: string): string => {
+  switch (code) {
+    case 'auth/user-not-found':
+    case 'auth/invalid-credential':
+      return 'No account found with these credentials. Please check your email and password.';
+    case 'auth/wrong-password':
+      return 'Incorrect password. Please try again.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/too-many-requests':
+      return 'Too many failed attempts. Please try again later.';
+    case 'auth/user-disabled':
+      return 'This account has been disabled. Please contact support.';
+    default:
+      return 'Sign in failed. Please check your credentials and try again.';
+  }
+};
 
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleLogin = () => {
-    router.replace('/(tabs)');
+  const handleLogin = async () => {
+    if (!email.trim() || !password) {
+      Alert.alert('Missing Fields', 'Please enter your email and password.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      router.replace('/(tabs)');
+    } catch (err) {
+      const authError = err as AuthError;
+      Alert.alert('Sign In Failed', getFriendlyError(authError.code));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -63,6 +100,7 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="next"
+                  editable={!isLoading}
                 />
               </View>
             </View>
@@ -82,6 +120,7 @@ export default function LoginScreen() {
                   autoCorrect={false}
                   returnKeyType="done"
                   onSubmitEditing={handleLogin}
+                  editable={!isLoading}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -103,18 +142,29 @@ export default function LoginScreen() {
             </TouchableOpacity>
 
             <Pressable
-              style={({ pressed }) => [styles.loginBtn, pressed && styles.loginBtnPressed]}
+              style={({ pressed }) => [
+                styles.loginBtn,
+                pressed && styles.loginBtnPressed,
+                isLoading && styles.loginBtnDisabled,
+              ]}
               onPress={handleLogin}
+              disabled={isLoading}
               accessibilityRole="button"
               accessibilityLabel="Sign In"
             >
-              <Text style={styles.loginText}>Sign In</Text>
-              <MaterialCommunityIcons name="arrow-right" size={18} color="#fff" />
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Text style={styles.loginText}>Sign In</Text>
+                  <MaterialCommunityIcons name="arrow-right" size={18} color="#fff" />
+                </>
+              )}
             </Pressable>
           </View>
 
           <View style={styles.secondaryAction}>
-            <Text style={styles.secondaryText}>Don’t have an account? </Text>
+            <Text style={styles.secondaryText}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.replace('/signup')} activeOpacity={0.7}>
               <Text style={styles.secondaryLink}>Create Account</Text>
             </TouchableOpacity>
@@ -305,6 +355,9 @@ const styles = StyleSheet.create({
   loginBtnPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
+  },
+  loginBtnDisabled: {
+    opacity: 0.7,
   },
   loginText: {
     fontSize: 15,

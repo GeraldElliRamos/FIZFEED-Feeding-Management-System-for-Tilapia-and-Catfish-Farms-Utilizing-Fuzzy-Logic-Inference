@@ -1,17 +1,8 @@
+import Sidebar from "./Sidebar";
 import "./Dashboard.css";
 import "./Sidebar.css";
-import { NavLink, Link } from "react-router-dom";
 import {
-  MdDashboard,
-  MdSchedule,
-  MdAnalytics,
-  MdNotifications,
-  MdPsychology,
   MdDevices,
-  MdInventory,
-  MdHelpOutline,
-  MdPerson,
-  MdLogout,
   MdTrendingDown,
   MdBolt,
   MdWaterDrop,
@@ -30,6 +21,7 @@ import {
 } from "chart.js";
 
 import { Line, Bar, Doughnut } from "react-chartjs-2";
+import { useDevices, usePonds, useSchedules, useUserProfile } from "./hooks/useFirestore";
 
 ChartJS.register(
   CategoryScale,
@@ -46,15 +38,34 @@ ChartJS.register(
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
+  plugins: {
+    legend: { display: false },
+    tooltip: { enabled: false },
+  },
+  scales: {
+    x: { display: false },
+    y: { display: false },
+  },
 };
 
 function Dashboard() {
+  const { profile } = useUserProfile();
+  const { ponds } = usePonds();
+  const { schedules } = useSchedules();
+  const { devices } = useDevices();
+  const totalFeed = ponds.reduce((sum, pond) => sum + (Number(pond.currentStock) || 0), 0);
+  const onlineDevices = devices.filter((device) => device.status === "online").length;
+  const totalScheduledFeed = schedules.reduce((sum, schedule) => sum + (Number(schedule.amountKg) || 0), 0);
+  const completedFeed = schedules
+    .filter((schedule) => schedule.status?.toLowerCase() === "completed")
+    .reduce((sum, schedule) => sum + (Number(schedule.amountKg) || 0), 0);
+  const efficiency = totalScheduledFeed > 0 ? Math.round((completedFeed / totalScheduledFeed) * 100) : null;
+
   const realTimeConsumption = {
-    labels: ["6AM", "9AM", "12PM", "3PM", "6PM"],
+    labels: schedules.length ? schedules.map((schedule) => schedule.time || "Unscheduled") : ["No data"],
     datasets: [
       {
-        data: [2.5, 3.2, 4.5, 4.2, 3],
+        data: schedules.length ? schedules.map((schedule) => Number(schedule.amountKg) || 0) : [0],
         borderColor: "#2563eb",
         backgroundColor: "rgba(37,99,235,0.2)",
         tension: 0.4,
@@ -64,10 +75,10 @@ function Dashboard() {
   };
 
   const averageDailyFeeding = {
-    labels: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+    labels: schedules.length ? schedules.map((schedule) => schedule.pondName || "Unknown") : ["No data"],
     datasets: [
       {
-        data: [7.2, 8.1, 7.5, 7.8, 7.1, 7.6, 8.2],
+        data: schedules.length ? schedules.map((schedule) => Number(schedule.amountKg) || 0) : [0],
         backgroundColor: "#8b5cf6",
         borderRadius: 6,
       },
@@ -75,10 +86,10 @@ function Dashboard() {
   };
 
   const waterTemperature = {
-    labels: ["1PM", "2PM", "3PM", "4PM", "5PM", "6PM"],
+    labels: devices.length ? devices.map((device) => device.name || device.id) : ["No data"],
     datasets: [
       {
-        data: [26, 26.5, 27, 27.2, 27.1, 26.8],
+        data: devices.length ? devices.map((device) => Number(device.temperature) || 0) : [0],
         borderColor: "#f97316",
         tension: 0.3,
       },
@@ -86,11 +97,11 @@ function Dashboard() {
   };
 
   const feedDistribution = {
-    labels: ["Pond A", "Pond B", "Pond C"],
+    labels: ponds.length ? ponds.map((pond) => pond.name || "Unnamed pond") : ["No data"],
     datasets: [
       {
-        data: [45, 30, 25],
-        backgroundColor: ["#2563eb", "#10b981", "#8b5cf6"],
+        data: ponds.length ? ponds.map((pond) => Number(pond.currentStock) || 0) : [100],
+        backgroundColor: ponds.length ? ["#2563eb", "#10b981", "#8b5cf6", "#f97316", "#ef4444"] : ["#e5e7eb"],
         cutout: "70%",
       },
     ],
@@ -99,64 +110,14 @@ function Dashboard() {
   return (
     <div className="dashboard-layout">
       {/* ================= SIDEBAR ================= */}
-      <aside className="sidebar">
-  <div className="logo">
-    <img
-      src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBZwXJ1Dj8t1Dl9_kNMyeYMnufW5igHVX-kUgbaUFiDjf6zcesivFSHfBtWk3K6xa_DvSY6lx_28wX3tmwnUhqpgS-sWI6ghllOxodNwqg-ab4L4asPXVd7AISlPq7OS953j3ecXAVh6Lhwyx4YRdhspIfsbIJNilPdMRENv4vmbH3yWc9G20Al4Gufe8rR4vTPNFfeyceXQpu6rjB434K6pSwajZlxsRk47LRRTQeLZ75BnX_wTZ0F6EFNcGIoDkVyJCEUpHkGEc"
-      alt="logo"
-    />
-    <div>
-      <h3>FIZFEED</h3>
-      <p>Smart Aquaculture</p>
-    </div>
-  </div>
-
-  <nav>
-    <NavLink to="/dashboard" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdDashboard /> Dashboard
-    </NavLink>
-    <NavLink to="/schedule" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdSchedule /> Schedule
-    </NavLink>
-    <NavLink to="/analytics" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdAnalytics /> Analytics
-    </NavLink>
-
-    <NavLink to="/notifications" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdNotifications /> Notifications
-    </NavLink>
-     <NavLink to="/ai_recommendation" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdNotifications /> AI Recommendation
-    </NavLink>
-      <NavLink to="/devices" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdDevices /> Devices
-    </NavLink>
-     <NavLink to="/inventory" className={({ isActive }) => isActive ? "active" : ""}>
-      <MdInventory /> Inventory
-    </NavLink>
-    
-  </nav>
-
-  <div className="sidebar-footer">
-    <a><MdHelpOutline /> Help</a>
-     <NavLink
-    to="/profile"
-    className={({ isActive }) => (isActive ? "active" : "")}
-  >
-    <MdPerson /> Profile
-  </NavLink>
-    <Link to="/" className="logout">
-      <MdLogout /> Logout
-    </Link>
-  </div>
-</aside>
+      <Sidebar />
 
       {/* ================= MAIN ================= */}
       <main className="dashboard-main">
         <header className="top-header">
           <div>
             <h1>Live Dashboard</h1>
-            <p>Welcome back to FIZFEED</p>
+            <p>Welcome back{profile?.displayName ? `, ${profile.displayName}` : ""}</p>
           </div>
     
         </header>
@@ -167,25 +128,25 @@ function Dashboard() {
   <div className="stat-card blue">
     <MdBolt size={26} className="color-icon" />
     <p className="label">Feed Efficiency</p>
-    <h3>94.3%</h3>
+    <h3>--</h3>
   </div>
 
   <div className="stat-card green">
     <MdDevices size={26} className="color-icon"  />
     <p className="label">Devices Online</p>
-    <h3>2 / 3</h3>
+    <h3>--</h3>
   </div>
 
   <div className="stat-card purple">
     <MdWaterDrop size={26} className="color-icon"  />
     <p className="label">Total Feed</p>
-    <h3>16.7 kg</h3>
+    <h3>--</h3>
   </div>
 
   <div className="stat-card orange">
     <MdTrendingDown size={26} className="color-icon"  />
     <p className="label">Feed Waste</p>
-    <h3>0.8 kg</h3>
+    <h3>--</h3>
   </div>
 </section>
 

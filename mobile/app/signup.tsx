@@ -1,25 +1,139 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { createUserWithEmailAndPassword, updateProfile, AuthError } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Image, Pressable, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+} from 'react-native';
+import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { auth, db } from '../firebase';
+
+const getFriendlyError = (code: string): string => {
+  switch (code) {
+    case 'auth/email-already-in-use':
+      return 'An account with this email already exists. Please sign in instead.';
+    case 'auth/invalid-email':
+      return 'Please enter a valid email address.';
+    case 'auth/weak-password':
+      return 'Password must be at least 6 characters long.';
+    case 'auth/too-many-requests':
+      return 'Too many requests. Please try again later.';
+    default:
+      return 'Account creation failed. Please try again.';
+  }
+};
 
 export default function SignUpScreen() {
   const router = useRouter();
   const [fullName, setFullName] = useState('');
   const [farmName, setFarmName] = useState('');
+  const [address, setAddress] = useState('');
+  const [role, setRole] = useState<'admin' | 'farm_owner' | 'farm_staff' | 'viewer'>('farm_owner');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleCreateAccount = () => {
-    router.replace('/login');
+  const handleCreateAccount = async () => {
+    // — Validation —
+    if (!fullName.trim()) {
+      Alert.alert('Missing Field', 'Please enter your full name.');
+      return;
+    }
+    if (!email.trim()) {
+      Alert.alert('Missing Field', 'Please enter your email address.');
+      return;
+    }
+    if (password.length < 6) {
+      Alert.alert('Weak Password', 'Password must be at least 6 characters long.');
+      return;
+    }
+    if (password !== confirmPassword) {
+      Alert.alert('Password Mismatch', 'Passwords do not match. Please try again.');
+      return;
+    }
+    if (!termsAccepted) {
+      Alert.alert('Terms Required', 'Please accept the Terms of Service and Privacy Policy.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // 1. Create Firebase Auth User
+      const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
+      const uid = userCredential.user.uid;
+      console.log("Firebase Auth User Created:", uid);
+
+      // 2. Update Auth Profile
+      try {
+        await updateProfile(userCredential.user, { displayName: fullName.trim() });
+      } catch (pErr) {
+        console.warn("Profile update warning:", pErr);
+      }
+      
+      // 3. Create User Document in Firestore (Required)
+      try {
+        await setDoc(doc(db, "users", uid), {
+          displayName: fullName.trim(),
+          email: email.trim(),
+          role,
+          farmName: farmName.trim() || "My Aqua Farm",
+          address: address.trim(),
+          phone: "",
+          location: address.trim(),
+          createdAt: serverTimestamp()
+        });
+        console.log("Firestore User Document Created successfully at users/" + uid);
+      } catch (docErr: any) {
+        console.error("Failed writing Firestore user document:", docErr);
+        Alert.alert('Firestore Error', `Account created, but writing user data failed: ${docErr?.message || docErr}`);
+        setIsLoading(false);
+        return;
+      }
+      
+      // 4. Populate default collections for the user
+      try {
+        const pondsRef = collection(db, "users", uid, "ponds");
+        await addDoc(pondsRef, { name: "Pond A", fishType: "Tilapia", capacity: 25, currentStock: 18.5, dailyUsage: 8.2 });
+        await addDoc(pondsRef, { name: "Pond B", fishType: "Catfish", capacity: 25, currentStock: 11.2, dailyUsage: 2.8 });
+
+        const schedulesRef = collection(db, "users", uid, "schedules");
+        await addDoc(schedulesRef, { time: "06:00", period: "AM", amountKg: 2.5, pondName: "Pond A", fishType: "Tilapia", status: "Scheduled", enabled: true, date: serverTimestamp() });
+        
+        const notifsRef = collection(db, "users", uid, "notifications");
+        await addDoc(notifsRef, { title: "Welcome to FIZFEED", message: "Your smart aquaculture system is ready.", type: "success", read: false, createdAt: serverTimestamp() });
+      } catch (colErr) {
+        console.warn("Subcollection initialization warning:", colErr);
+      }
+
+      router.replace('/(tabs)');
+    } catch (err: any) {
+      console.error("Signup error details: ", err);
+      Alert.alert('Sign Up Failed', err?.message || getFriendlyError(err?.code || ''));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <View style={styles.outerBg}>
+    <KeyboardAvoidingView
+      style={styles.outerBg}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.bgBase} />
       <View style={styles.bgGradientTop} />
       <View style={styles.bgGradientBottom} />
@@ -27,7 +141,11 @@ export default function SignUpScreen() {
       <View style={[styles.decorCircle, styles.decorCircleBottomLeft]} />
       <View style={[styles.decorCircleSmall, styles.decorCircleTopLeft]} />
 
-      <View style={styles.content}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.card}>
           <View style={styles.logoContainer}>
             <View style={styles.logoCard}>
@@ -58,6 +176,7 @@ export default function SignUpScreen() {
                   onChangeText={setFullName}
                   autoCapitalize="words"
                   returnKeyType="next"
+                  editable={!isLoading}
                 />
               </View>
             </View>
@@ -74,7 +193,56 @@ export default function SignUpScreen() {
                   onChangeText={setFarmName}
                   autoCapitalize="words"
                   returnKeyType="next"
+                  editable={!isLoading}
                 />
+              </View>
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Farm Address</Text>
+              <View style={[styles.inputWrapper, styles.inputWrapperMultiline]}>
+                <MaterialCommunityIcons name="map-marker-outline" size={20} color="#94a3b8" style={[styles.inputIcon, { alignSelf: 'flex-start', marginTop: 12 }]} />
+                <TextInput
+                  style={[styles.input, styles.addressInput]}
+                  placeholder="Street, Barangay, City, Province"
+                  placeholderTextColor="#94a3b8"
+                  value={address}
+                  onChangeText={setAddress}
+                  autoCapitalize="words"
+                  returnKeyType="next"
+                  multiline
+                  numberOfLines={3}
+                  editable={!isLoading}
+                />
+              </View>
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.label}>Role</Text>
+              <View style={styles.roleOptions}>
+                {[
+                  { key: 'admin', label: 'Admin' },
+                  { key: 'farm_owner', label: 'Farm Owner' },
+                  { key: 'farm_staff', label: 'Farm Staff' },
+                  { key: 'viewer', label: 'Viewer' },
+                ].map((item) => (
+                  <Pressable
+                    key={item.key}
+                    onPress={() => setRole(item.key as typeof role)}
+                    style={({ pressed }) => [
+                      styles.roleOption,
+                      role === item.key && styles.roleOptionActive,
+                      pressed && styles.roleOptionPressed,
+                    ]}
+                    disabled={isLoading}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Select role ${item.label}`}
+                  >
+                    <Text style={[styles.roleOptionText, role === item.key && styles.roleOptionTextActive]}>
+                      {item.label}
+                    </Text>
+                  </Pressable>
+                ))}
               </View>
             </View>
 
@@ -92,6 +260,7 @@ export default function SignUpScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="next"
+                  editable={!isLoading}
                 />
               </View>
             </View>
@@ -110,6 +279,7 @@ export default function SignUpScreen() {
                   autoCapitalize="none"
                   autoCorrect={false}
                   returnKeyType="next"
+                  editable={!isLoading}
                 />
                 <TouchableOpacity
                   onPress={() => setShowPassword(!showPassword)}
@@ -141,6 +311,7 @@ export default function SignUpScreen() {
                   autoCorrect={false}
                   returnKeyType="done"
                   onSubmitEditing={handleCreateAccount}
+                  editable={!isLoading}
                 />
                 <TouchableOpacity
                   onPress={() => setShowConfirmPassword(!showConfirmPassword)}
@@ -162,6 +333,7 @@ export default function SignUpScreen() {
                 style={styles.checkboxWrap}
                 onPress={() => setTermsAccepted(!termsAccepted)}
                 activeOpacity={0.7}
+                disabled={isLoading}
               >
                 <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
                   {termsAccepted && <MaterialCommunityIcons name="check" size={12} color="#fff" />}
@@ -174,27 +346,39 @@ export default function SignUpScreen() {
             </View>
 
             <Pressable
-              style={({ pressed }) => [styles.createBtn, pressed && styles.createBtnPressed]}
+              style={({ pressed }) => [
+                styles.createBtn,
+                pressed && styles.createBtnPressed,
+                isLoading && styles.createBtnDisabled,
+              ]}
               onPress={handleCreateAccount}
+              disabled={isLoading}
               accessibilityRole="button"
               accessibilityLabel="Create Account"
             >
-              <Text style={styles.createText}>Create Account</Text>
-              <MaterialCommunityIcons name="arrow-right" size={18} color="#fff" />
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Text style={styles.createText}>Create Account</Text>
+                  <MaterialCommunityIcons name="arrow-right" size={18} color="#fff" />
+                </>
+              )}
             </Pressable>
           </View>
 
           <View style={styles.secondaryAction}>
             <Text style={styles.secondaryText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.replace('/login')} activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => router.replace('/login')} activeOpacity={0.7} disabled={isLoading}>
               <Text style={styles.secondaryLink}>Sign In</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </View>
-    </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
+
 
 const styles = StyleSheet.create({
   outerBg: {
@@ -250,11 +434,11 @@ const styles = StyleSheet.create({
     top: 60,
     left: -30,
   },
-  content: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
+    paddingVertical: 28,
     paddingHorizontal: 20,
   },
   card: {
@@ -263,10 +447,9 @@ const styles = StyleSheet.create({
     maxWidth: 420,
     borderRadius: 20,
     paddingHorizontal: 28,
-    paddingTop: 22,
-    paddingBottom: 18,
+    paddingTop: 28,
+    paddingBottom: 24,
     alignItems: 'center',
-    transform: [{ translateY: -32 }],
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.22,
@@ -319,6 +502,34 @@ const styles = StyleSheet.create({
   fieldGroup: {
     gap: 6,
   },
+  roleOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  roleOption: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    backgroundColor: '#eef2ff',
+    borderWidth: 1,
+    borderColor: '#c7d2fe',
+  },
+  roleOptionPressed: {
+    opacity: 0.85,
+  },
+  roleOptionActive: {
+    backgroundColor: '#005BBF',
+    borderColor: '#005BBF',
+  },
+  roleOptionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#1e3a8a',
+  },
+  roleOptionTextActive: {
+    color: '#ffffff',
+  },
   label: {
     fontSize: 13,
     fontWeight: '600',
@@ -334,6 +545,12 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e2e8f0',
   },
+  inputWrapperMultiline: {
+    height: 'auto',
+    minHeight: 80,
+    alignItems: 'flex-start',
+    paddingVertical: 8,
+  },
   inputIcon: {
     marginRight: 10,
   },
@@ -342,6 +559,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0f172a',
     height: '100%',
+  },
+  addressInput: {
+    height: undefined,
+    minHeight: 60,
+    textAlignVertical: 'top',
+    paddingTop: 4,
   },
   passwordInput: {
     paddingRight: 8,
@@ -400,6 +623,9 @@ const styles = StyleSheet.create({
   createBtnPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
+  },
+  createBtnDisabled: {
+    opacity: 0.7,
   },
   createText: {
     fontSize: 15,

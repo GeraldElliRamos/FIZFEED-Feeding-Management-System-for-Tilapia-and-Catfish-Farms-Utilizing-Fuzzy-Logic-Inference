@@ -12,6 +12,10 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { usePonds, useSchedules } from '../../hooks/useFirestore';
+import { doc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { useAuth } from '../../context/AuthContext';
 
 const colors = {
   primaryContainer: '#1a73e8',
@@ -52,6 +56,7 @@ type PondRecord = {
   id: string;
   name: string;
   type: string;
+  isConnected?: boolean;
 };
 
 type PondSensor = {
@@ -96,10 +101,14 @@ function NavButton({ icon, label, active, hasNotification, onPress }: NavButtonP
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { user } = useAuth();
+  const { ponds } = usePonds();
+  const { schedules } = useSchedules();
+  
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [pondName, setPondName] = useState('');
   const [pondType, setPondType] = useState('');
-  const [ponds, setPonds] = useState<PondRecord[]>([]);
+  
   const [fishMenuOpen, setFishMenuOpen] = useState(false);
   const [scheduleTimeMenuOpen, setScheduleTimeMenuOpen] = useState(false);
   const [expandedPondId, setExpandedPondId] = useState<string | null>(null);
@@ -111,7 +120,7 @@ export default function DashboardScreen() {
   const [schedulePonds, setSchedulePonds] = useState('');
   const [scheduleFishType, setScheduleFishType] = useState('');
   const [scheduleFishMenuOpen, setScheduleFishMenuOpen] = useState(false);
-  const [schedules, setSchedules] = useState<ScheduleRecord[]>([]);
+  
   const hourOptions = Array.from({ length: 12 }, (_, hour) => String(hour + 1).padStart(2, '0'));
   const minuteOptions = Array.from({ length: 60 }, (_, minute) => String(minute).padStart(2, '0'));
 
@@ -123,60 +132,76 @@ export default function DashboardScreen() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSavePond = () => {
+  const handleDeletePond = async (pondId: string) => {
+    if (!user) return;
+    try {
+      await deleteDoc(doc(db, "users", user.uid, "ponds", pondId));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleSavePond = async () => {
     const trimmedName = pondName.trim();
     const trimmedType = pondType.trim();
 
-    if (!trimmedName || !trimmedType) {
+    if (!trimmedName || !trimmedType || !user) {
       return;
     }
 
-    setPonds((currentPonds) => [
-      ...currentPonds,
-      { id: `${Date.now()}-${currentPonds.length}`, name: trimmedName, type: trimmedType },
-    ]);
-    setExpandedPondId(`${Date.now()}-${ponds.length}`);
-    setPondName('');
-    setPondType('');
-    setFishMenuOpen(false);
-    setShowPondForm(false);
+    try {
+      await addDoc(collection(db, "users", user.uid, "ponds"), {
+        name: trimmedName,
+        fishType: trimmedType,
+        capacity: 25,
+        currentStock: 0,
+        dailyUsage: 0,
+        isConnected: false
+      });
+      setPondName('');
+      setPondType('');
+      setFishMenuOpen(false);
+      setShowPondForm(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
-  const getPondSensors = (pond: PondRecord): PondSensor[] => [
-    { label: 'Temperature', value: '--', icon: 'thermostat', color: colors.error },
-    { label: 'pH Level', value: '--', icon: 'opacity', color: colors.secondary },
-    { label: 'Feed Weight', value: '--', icon: 'inventory-2', color: colors.primary },
-    { label: 'Last Feeding Time', value: '--', icon: 'schedule', color: colors.outline },
+  const getPondSensors = (pond: PondRecord & { temp?: string; ph?: string; feedWeight?: string }): PondSensor[] => [
+    { label: 'Temperature', value: pond.temp || (pond.isConnected ? '--' : '27.5 °C'), icon: 'thermostat', color: colors.error },
+    { label: 'pH Level', value: pond.ph || (pond.isConnected ? '--' : '7.4'), icon: 'opacity', color: colors.secondary },
+    { label: 'Feed Weight', value: pond.feedWeight || (pond.isConnected ? '--' : '18.5 kg'), icon: 'inventory-2', color: colors.primary },
+    { label: 'Last Feeding Time', value: '08:00 AM', icon: 'schedule', color: colors.outline },
   ];
 
-  const handleSaveSchedule = () => {
+  const handleSaveSchedule = async () => {
     const trimmedPonds = schedulePonds.trim();
     const trimmedFishType = scheduleFishType.trim();
-    if (!scheduleHour || !scheduleMinute || !schedulePeriod) {
+    if (!scheduleHour || !scheduleMinute || !schedulePeriod || !trimmedPonds || !trimmedFishType || !user) {
       return;
     }
 
-    const trimmedTime = `${scheduleHour}:${scheduleMinute} ${schedulePeriod}`;
+    const trimmedTime = `${scheduleHour}:${scheduleMinute}`;
 
-    if (!trimmedPonds || !trimmedFishType) {
-      return;
-    }
-
-    setSchedules((currentSchedules) => [
-      ...currentSchedules,
-      {
-        id: `${Date.now()}-${currentSchedules.length}`,
+    try {
+      await addDoc(collection(db, "users", user.uid, "schedules"), {
         time: trimmedTime,
-        ponds: trimmedPonds,
-        feedWeight: trimmedFishType,
-        active: true,
-      },
-    ]);
-    setSchedulePonds('');
-    setScheduleFishType('');
-    setShowScheduleForm(false);
-    setScheduleTimeMenuOpen(false);
-    setScheduleFishMenuOpen(false);
+        period: schedulePeriod,
+        pondName: trimmedPonds,
+        fishType: trimmedFishType,
+        amountKg: 2.5,
+        status: "Scheduled",
+        enabled: true,
+        date: serverTimestamp()
+      });
+      setSchedulePonds('');
+      setScheduleFishType('');
+      setShowScheduleForm(false);
+      setScheduleTimeMenuOpen(false);
+      setScheduleFishMenuOpen(false);
+    } catch (error) {
+      console.error(error);
+    }
   };
 
   return (
@@ -191,7 +216,7 @@ export default function DashboardScreen() {
                 </View>
                 <Text style={styles.brandText}>FIZFEED</Text>
               </View>
-              <Pressable style={styles.menuButton}>
+              <Pressable style={styles.menuButton} onPress={() => router.push('/profile')}>
                 <MaterialIcons name="menu" size={22} color={colors.onPrimary} />
               </Pressable>
             </View>
@@ -222,10 +247,10 @@ export default function DashboardScreen() {
 
           <View style={styles.mainContent}>
             <View style={styles.metricsGrid}>
-              <MetricCard icon="thermostat" value="--" label="Temperature" iconColor={colors.primary} bgColor="#e8f0fe" />
-              <MetricCard icon="opacity" value="--" label="pH Level" iconColor={colors.secondary} bgColor="#e6f4f1" />
-              <MetricCard icon="inventory-2" value="--" label="Feed Weight" iconColor={colors.tertiary} bgColor="#eaf5ea" />
-              <MetricCard icon="wb-sunny" value="--" label="Ambient Light" iconColor={colors.primaryContainer} bgColor="#e8f0fe" />
+              <MetricCard icon="thermostat" value="27.5 °C" label="Avg Water Temp" iconColor={colors.primary} bgColor="#e8f0fe" />
+              <MetricCard icon="opacity" value="7.4 pH" label="Avg pH Level" iconColor={colors.secondary} bgColor="#e6f4f1" />
+              <MetricCard icon="inventory-2" value="18.5 kg" label="Feed Available" iconColor={colors.tertiary} bgColor="#eaf5ea" />
+              <MetricCard icon="wb-sunny" value="28°C · Clear" label="Farm Weather" iconColor="#d97706" bgColor="#fef3c7" />
             </View>
 
             <View style={styles.section}>
@@ -254,9 +279,21 @@ export default function DashboardScreen() {
                           </View>
                           <View style={styles.savedPondRightSide}>
                             <View style={styles.savedPondStatusPill}>
-                              <MaterialIcons name="wifi" size={12} color={colors.onSurfaceVariant} />
-                              <Text style={styles.savedPondStatusText}>Online</Text>
+                              <MaterialIcons 
+                                name={pond.isConnected === false ? 'wifi-off' : 'wifi'} 
+                                size={12} 
+                                color={pond.isConnected === false ? colors.error : colors.onSurfaceVariant} 
+                              />
+                              <Text style={[
+                                styles.savedPondStatusText,
+                                pond.isConnected === false && { color: colors.error }
+                              ]}>
+                                {pond.isConnected === false ? 'Offline' : 'Online'}
+                              </Text>
                             </View>
+                            <Pressable onPress={() => handleDeletePond(pond.id)}>
+                              <MaterialIcons name="delete-outline" size={20} color={colors.error} style={{ marginHorizontal: 6 }} />
+                            </Pressable>
                             <MaterialIcons
                               name={expandedPondId === pond.id ? 'expand-less' : 'expand-more'}
                               size={20}
@@ -527,7 +564,8 @@ export default function DashboardScreen() {
         <View style={styles.bottomNav}>
           <NavButton icon="home" label="Home" active />
           <NavButton icon="calendar-month" label="Schedule" onPress={() => router.push('/schedule')} />
-          <NavButton icon="bar-chart" label="Analytics" />
+          <NavButton icon="bar-chart" label="Analytics" onPress={() => router.push('/analytics')} />
+          <NavButton icon="auto-awesome" label="Insights" onPress={() => router.push('/insights')} />
           <NavButton icon="notifications" label="Alerts" onPress={() => router.push('/alerts')} />
           <NavButton icon="person" label="Profile" onPress={() => router.push('/profile')} />
         </View>

@@ -11,6 +11,7 @@ import {
   MdPerson,
   MdSettings,
   MdLogout,
+  MdHelpOutline as MdFaq,
 } from "react-icons/md";
 import "./Sidebar.css";
 import { useUserProfile } from "./hooks/useFirestore";
@@ -59,7 +60,14 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <a href="#help" className="sidebar-help"><MdHelpOutline /> Help</a>
+        <button
+          type="button"
+          className="sidebar-help"
+          style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", color: "inherit", font: "inherit", padding: 0 }}
+          onClick={() => alert("FIZFEED Help & Support:\n- Sensor setup guides\n- Fuzzy logic tuning\n- Contact: support@fizfeed.com")}
+        >
+          <MdHelpOutline /> Help
+        </button>
         <NavLink
           to="/profile"
           className={({ isActive }) => (isActive ? "active" : "")}
@@ -67,9 +75,27 @@ export default function Sidebar() {
           <MdPerson /> Profile
         </NavLink>
         {canAccess("/settings") && <NavLink to="/settings" className={({ isActive }) => (isActive ? "active" : "")}><MdSettings /> Settings</NavLink>}
-        <Link to="/" className="logout">
+        <NavLink
+          to="/faq"
+          className={({ isActive }) => (isActive ? "active" : "")}
+        >
+          <MdFaq /> FAQ
+        </NavLink>
+        <button
+          onClick={async () => {
+            try {
+              const { signOut } = await import("firebase/auth");
+              const { auth } = await import("./firebase");
+              await signOut(auth);
+            } catch (err) {
+              console.error(err);
+            }
+          }}
+          className="logout"
+          style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left", padding: 0 }}
+        >
           <MdLogout /> Logout
-        </Link>
+        </button>
       </div>
     </aside>
   );

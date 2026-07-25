@@ -30,6 +30,17 @@ export function useUserProfile() {
   return { profile, loading };
 }
 
+const DEFAULT_PONDS = [
+  { id: 'p1', name: 'Pond A', fishType: 'Tilapia', capacity: 25, currentStock: 18.5, dailyUsage: 8.2 },
+  { id: 'p2', name: 'Pond B', fishType: 'Catfish', capacity: 25, currentStock: 11.2, dailyUsage: 2.8 },
+];
+
+const DEFAULT_SCHEDULES = [
+  { id: 's1', time: '06:00', period: 'AM', amountKg: 2.5, pondName: 'Pond A', fishType: 'Tilapia', enabled: true },
+  { id: 's2', time: '12:00', period: 'PM', amountKg: 3.0, pondName: 'Pond A', fishType: 'Tilapia', enabled: true },
+  { id: 's3', time: '06:00', period: 'PM', amountKg: 2.7, pondName: 'Pond A', fishType: 'Tilapia', enabled: true },
+];
+
 export function usePonds() {
   const { user } = useAuth();
   const [ponds, setPonds] = useState<any[]>([]);

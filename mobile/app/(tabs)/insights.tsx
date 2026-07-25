@@ -43,13 +43,13 @@ function NavItem({ icon, label, active, badge, onPress }: NavItemProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [s.navItem, pressed && { opacity: 0.7 }]}
+      style={({ pressed }) => [s.navItem, pressed && { opacity: 0.8 }]}
     >
       <View style={s.navIconWrap}>
         <MaterialIcons
           name={icon}
-          size={22}
-          color={active ? C.primary : C.textMuted}
+          size={24}
+          color={active ? '#005bbf' : '#414754'}
         />
         {badge && <View style={s.badge} />}
       </View>
@@ -160,16 +160,31 @@ export default function InsightsScreen() {
     <SafeAreaView style={s.safe} edges={['top']}>
       <View style={{ flex: 1 }}>
 
-        {/* Header */}
-        <View style={s.header}>
-          <Pressable onPress={() => router.replace('/analytics')} style={s.backBtn}>
-            <MaterialIcons name="arrow-back" size={22} color={C.primary} />
-          </Pressable>
-          <View style={{ flex: 1 }}>
-            <Text style={s.headerTitle}>Farm Insights</Text>
-            <Text style={s.headerSub}>Based on your ponds & schedules</Text>
+        {/* Header - Gradient brand bar matching all screens */}
+        <LinearGradient
+          colors={['#1a73e8', '#006874']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={s.topBar}
+        >
+          <View style={s.topBarRow}>
+            <View style={s.brandRow}>
+              <View style={s.logoBlock}>
+                <MaterialIcons name="eco" size={16} color="#ffffff" />
+              </View>
+              <Text style={s.brandText}>FIZFEED</Text>
+            </View>
+            <Pressable style={s.menuButton} onPress={() => router.push('/profile')}>
+              <MaterialIcons name="menu" size={22} color="#ffffff" />
+            </Pressable>
           </View>
-        </View>
+          <View style={s.topBarBottomRow}>
+            <View>
+              <Text style={s.bannerTitle}>Farm Insights</Text>
+              <Text style={s.bannerSubtitle}>Based on your ponds & schedules</Text>
+            </View>
+          </View>
+        </LinearGradient>
 
         <ScrollView
           contentContainerStyle={s.scroll}
@@ -224,7 +239,15 @@ export default function InsightsScreen() {
 
           {/* ── Tips section ───────────────────────────────────────────────── */}
           <View style={s.section}>
-            <Text style={s.sectionTitle}>Feeding Tips</Text>
+            <Text style={s.sectionTitle}>Feeding & Weather Insights</Text>
+
+            <TipRow
+              icon="wb-sunny"
+              iconColor="#d97706"
+              iconBg="#fef3c7"
+              title="Live Weather & Ambient Conditions"
+              desc="Current farm weather is 28°C (Clear/Sunny). Warm sunlight promotes natural phytoplankton photosynthesis, supporting optimal natural dissolved oxygen."
+            />
 
             {noData ? (
               <View style={s.emptyWrap}>
@@ -260,18 +283,10 @@ export default function InsightsScreen() {
                     icon="water"
                     iconColor={C.tertiary}
                     iconBg={C.tertiaryLight}
-                    title={`Aerate ${pond2} regularly`}
-                    desc="Good oxygen levels lead to better feed conversion and healthier fish growth."
+                    title={`Aerate ${pond2} on Rain/Cloudy Days`}
+                    desc="Since rain reduces atmospheric oxygen solubility, the 3-Layer engine automatically optimizes feed to prevent uneaten waste."
                   />
                 )}
-
-                <TipRow
-                  icon="thermostat"
-                  iconColor={C.error}
-                  iconBg={C.errorLight}
-                  title="Monitor water temperature"
-                  desc="Fish metabolism and appetite change with temperature. Adjust feed amounts on hot or cold days."
-                />
               </>
             )}
           </View>
@@ -332,7 +347,7 @@ export default function InsightsScreen() {
 
         {/* Bottom Nav */}
         <View style={s.bottomNav}>
-          <NavItem icon="home" label="Home" onPress={() => router.replace('/')} />
+          <NavItem icon="home" label="Home" onPress={() => router.replace('/(tabs)')} />
           <NavItem icon="calendar-month" label="Schedule" onPress={() => router.replace('/schedule')} />
           <NavItem icon="bar-chart" label="Analytics" onPress={() => router.replace('/analytics')} />
           <NavItem icon="auto-awesome" label="Insights" active />
@@ -348,20 +363,60 @@ export default function InsightsScreen() {
 const s = StyleSheet.create({
   safe: { flex: 1, backgroundColor: C.surface },
 
-  // Header
-  header: {
+  // Top bar (gradient brand header)
+  topBar: {
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 16,
+  },
+  topBarRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    backgroundColor: C.card,
-    borderBottomWidth: 1,
-    borderBottomColor: C.border,
+    justifyContent: 'space-between',
+    marginBottom: 14,
   },
-  backBtn: { padding: 4 },
-  headerTitle: { fontSize: 17, fontWeight: '700', color: C.textPrimary },
-  headerSub: { fontSize: 12, color: C.textMuted, marginTop: 1 },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  logoBlock: {
+    width: 28,
+    height: 28,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  brandText: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
+    letterSpacing: 1,
+  },
+  menuButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  topBarBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+  },
+  bannerTitle: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#ffffff',
+  },
+  bannerSubtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 2,
+  },
 
   scroll: { paddingBottom: 110, gap: 0 },
 
@@ -483,11 +538,19 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     alignItems: 'center',
-    paddingTop: 10,
+    paddingHorizontal: 12,
+    paddingTop: 12,
     paddingBottom: 14,
-    backgroundColor: C.card,
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 10,
     borderTopWidth: 1,
-    borderTopColor: C.border,
+    borderTopColor: '#e7e8e9',
     position: 'absolute',
     bottom: 0,
     left: 0,
@@ -495,8 +558,12 @@ const s = StyleSheet.create({
   },
   navItem: {
     alignItems: 'center',
-    gap: 2,
-    paddingHorizontal: 6,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 10,
+    position: 'relative',
+    minWidth: 54,
   },
   navIconWrap: { position: 'relative' },
   badge: {
@@ -508,6 +575,6 @@ const s = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: C.error,
   },
-  navLabel: { fontSize: 10, color: C.textMuted, fontWeight: '500' },
-  navLabelActive: { color: C.primary, fontWeight: '700' },
+  navLabel: { fontSize: 11, color: '#414754', fontWeight: '500', marginTop: 3 },
+  navLabelActive: { color: '#005bbf', fontWeight: '700' },
 });

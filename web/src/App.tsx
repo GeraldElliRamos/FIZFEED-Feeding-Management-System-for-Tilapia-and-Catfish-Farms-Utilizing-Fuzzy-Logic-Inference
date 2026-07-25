@@ -25,6 +25,7 @@ import Devices from "./Devices";
 import Inventory from "./Inventory";
 import Profile from "./Profile";
 import Settings from "./Settings";
+import FAQ from "./FAQ";
 import { useUserProfile } from "./hooks/useFirestore";
 
 type Role = "admin" | "farm_owner" | "farm_staff" | "viewer";
@@ -39,6 +40,7 @@ const routeAccess: Record<string, Role[]> = {
   "/inventory": ["admin", "farm_owner"],
   "/profile": ["admin", "farm_owner", "farm_staff", "viewer"],
   "/settings": ["admin", "farm_owner"],
+  "/faq": ["admin", "farm_owner", "farm_staff", "viewer"],
 };
 
 /* ================= PROTECTED ROUTE ================= */
@@ -228,9 +230,26 @@ function Login() {
                 <label htmlFor="remember">Remember me</label>
               </div>
 
-              <a href="#" className="forgot">
+              <button
+                type="button"
+                className="forgot"
+                style={{ background: "none", border: "none", cursor: "pointer" }}
+                onClick={async () => {
+                  if (!email.trim()) {
+                    setError("Please enter your email address above first to reset your password.");
+                    return;
+                  }
+                  try {
+                    const { sendPasswordResetEmail } = await import("firebase/auth");
+                    await sendPasswordResetEmail(auth, email.trim());
+                    alert(`Password reset link sent to ${email.trim()}! Check your inbox.`);
+                  } catch (err: any) {
+                    setError(err?.message || "Failed to send password reset email.");
+                  }
+                }}
+              >
                 Forgot password?
-              </a>
+              </button>
             </div>
 
             <button
@@ -334,6 +353,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Settings />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/faq"
+          element={
+            <ProtectedRoute>
+              <FAQ />
             </ProtectedRoute>
           }
         />

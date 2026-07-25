@@ -38,11 +38,11 @@ function AuthGuard() {
     const tabName = segments[1] || 'index';
     const canAccessTab = tabAccess[tabName]?.includes(role) ?? true;
 
-    if (!user && inTabsGroup) {
-      // Not logged in but trying to access a protected tab → go to login
+    if (!user && (inTabsGroup || segments[0] === 'index' || !segments[0])) {
+      // Not logged in → redirect directly to login
       router.replace('/login');
-    } else if (user && (segments[0] === 'login' || segments[0] === 'signup')) {
-      // Already logged in but on login/signup → go to tabs
+    } else if (user && (segments[0] === 'login' || segments[0] === 'signup' || segments[0] === 'index' || !segments[0])) {
+      // Already logged in → go to main app dashboard tabs
       router.replace('/(tabs)');
     } else if (user && inTabsGroup && !canAccessTab) {
       router.replace(getDefaultTabPath(role));

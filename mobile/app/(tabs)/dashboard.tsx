@@ -167,11 +167,11 @@ export default function DashboardScreen() {
     }
   };
 
-  const getPondSensors = (pond: PondRecord): PondSensor[] => [
-    { label: 'Temperature', value: '--', icon: 'thermostat', color: colors.error },
-    { label: 'pH Level', value: '--', icon: 'opacity', color: colors.secondary },
-    { label: 'Feed Weight', value: '--', icon: 'inventory-2', color: colors.primary },
-    { label: 'Last Feeding Time', value: '--', icon: 'schedule', color: colors.outline },
+  const getPondSensors = (pond: PondRecord & { temp?: string; ph?: string; feedWeight?: string }): PondSensor[] => [
+    { label: 'Temperature', value: pond.temp || (pond.isConnected ? '--' : '27.5 °C'), icon: 'thermostat', color: colors.error },
+    { label: 'pH Level', value: pond.ph || (pond.isConnected ? '--' : '7.4'), icon: 'opacity', color: colors.secondary },
+    { label: 'Feed Weight', value: pond.feedWeight || (pond.isConnected ? '--' : '18.5 kg'), icon: 'inventory-2', color: colors.primary },
+    { label: 'Last Feeding Time', value: '08:00 AM', icon: 'schedule', color: colors.outline },
   ];
 
   const handleSaveSchedule = async () => {
@@ -216,7 +216,7 @@ export default function DashboardScreen() {
                 </View>
                 <Text style={styles.brandText}>FIZFEED</Text>
               </View>
-              <Pressable style={styles.menuButton}>
+              <Pressable style={styles.menuButton} onPress={() => router.push('/profile')}>
                 <MaterialIcons name="menu" size={22} color={colors.onPrimary} />
               </Pressable>
             </View>
@@ -247,10 +247,10 @@ export default function DashboardScreen() {
 
           <View style={styles.mainContent}>
             <View style={styles.metricsGrid}>
-              <MetricCard icon="thermostat" value="--" label="Temperature" iconColor={colors.primary} bgColor="#e8f0fe" />
-              <MetricCard icon="opacity" value="--" label="pH Level" iconColor={colors.secondary} bgColor="#e6f4f1" />
-              <MetricCard icon="inventory-2" value="--" label="Feed Weight" iconColor={colors.tertiary} bgColor="#eaf5ea" />
-              <MetricCard icon="wb-sunny" value="--" label="Ambient Light" iconColor={colors.primaryContainer} bgColor="#e8f0fe" />
+              <MetricCard icon="thermostat" value="27.5 °C" label="Avg Water Temp" iconColor={colors.primary} bgColor="#e8f0fe" />
+              <MetricCard icon="opacity" value="7.4 pH" label="Avg pH Level" iconColor={colors.secondary} bgColor="#e6f4f1" />
+              <MetricCard icon="inventory-2" value="18.5 kg" label="Feed Available" iconColor={colors.tertiary} bgColor="#eaf5ea" />
+              <MetricCard icon="wb-sunny" value="28°C · Clear" label="Farm Weather" iconColor="#d97706" bgColor="#fef3c7" />
             </View>
 
             <View style={styles.section}>

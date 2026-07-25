@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useSchedules } from '../../hooks/useFirestore';
+import { usePonds, useSchedules } from '../../hooks/useFirestore';
 import { doc, updateDoc, deleteDoc, addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { useAuth } from '../../context/AuthContext';
@@ -34,6 +34,7 @@ type ScheduleItem = {
   pond: string;
   crop: string;
   active: boolean;
+  amountKg?: number;
 };
 
 function BottomNavItem({
@@ -91,7 +92,7 @@ function ScheduleCard({
           <View style={styles.cardBottomRow}>
             <View>
               <Text style={styles.amountLabel}>Amount</Text>
-              <Text style={styles.amountValue}>Pending</Text>
+              <Text style={styles.amountValue}>{item.amountKg ? `${item.amountKg} kg` : '2.5 kg'}</Text>
             </View>
             <Pressable onPress={() => onDelete(item.id)} style={styles.deleteButton}>
               <MaterialIcons name="delete-outline" size={20} color={item.active ? colors.error : colors.outlineVariant} />
@@ -105,6 +106,7 @@ export default function ScheduleScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const { schedules, loading } = useSchedules();
+  const { ponds } = usePonds();
   const [currentDate] = useState(() => new Date());
 
   const [showAddForm, setShowAddForm] = useState(false);
@@ -113,13 +115,19 @@ export default function ScheduleScreen() {
   const [scheduleMinute, setScheduleMinute] = useState('');
   const [schedulePeriod, setSchedulePeriod] = useState<'AM' | 'PM' | ''>('');
   const [newPond, setNewPond] = useState('');
+  const [pondMenuOpen, setPondMenuOpen] = useState(false);
   const [newFishType, setNewFishType] = useState('');
   const [fishMenuOpen, setFishMenuOpen] = useState(false);
   const hourOptions = Array.from({ length: 12 }, (_, hour) => String(hour + 1).padStart(2, '0'));
   const minuteOptions = Array.from({ length: 60 }, (_, minute) => String(minute).padStart(2, '0'));
 
   const stats = useMemo(() => {
-    return { total: 'Pending', efficiency: schedules.length ? '94%' : '—' };
+    const activeSchedules = schedules.filter(s => s.enabled !== false);
+    const totalKg = activeSchedules.reduce((acc, curr) => acc + (curr.amountKg || 2.5), 0);
+    return {
+      total: activeSchedules.length ? `${totalKg.toFixed(1)} kg` : '0 kg',
+      efficiency: schedules.length ? `${Math.min(100, Math.round((activeSchedules.length / schedules.length) * 100))}%` : '—'
+    };
   }, [schedules]);
 
   const toggleSchedule = async (id: string) => {
@@ -201,7 +209,7 @@ export default function ScheduleScreen() {
               </View>
               <Text style={styles.brandText}>FIZFEED</Text>
             </View>
-            <Pressable style={styles.menuButton}>
+            <Pressable style={styles.menuButton} onPress={() => router.push('/profile')}>
               <MaterialIcons name="menu" size={22} color={colors.onPrimary} />
             </Pressable>
           </View>
@@ -234,7 +242,19 @@ export default function ScheduleScreen() {
           <View style={styles.list}>
             {schedules.length > 0 ? (
               schedules.map((item) => (
-                <ScheduleCard key={item.id} item={{ id: item.id, time: `${item.time} ${item.period}`, pond: item.pondName, crop: item.fishType, active: item.enabled !== false }} onToggle={toggleSchedule} onDelete={deleteSchedule} />
+                <ScheduleCard
+                  key={item.id}
+                  item={{
+                    id: item.id,
+                    time: item.period ? `${item.time} ${item.period}` : item.time,
+                    pond: item.pondName,
+                    crop: item.fishType,
+                    active: item.enabled !== false,
+                    amountKg: item.amountKg,
+                  }}
+                  onToggle={toggleSchedule}
+                  onDelete={deleteSchedule}
+                />
               ))
             ) : (
               <View style={styles.emptyState}>
@@ -271,7 +291,7 @@ export default function ScheduleScreen() {
         </Pressable>
 
         <View style={styles.bottomNav}>
-          <BottomNavItem icon="home" label="Home" onPress={() => router.replace('/')} />
+          <BottomNavItem icon="home" label="Home" onPress={() => router.replace('/(tabs)')} />
           <BottomNavItem icon="calendar-month" label="Schedule" active />
           <BottomNavItem icon="bar-chart" label="Analytics" onPress={() => router.push('/analytics')} />
           <BottomNavItem icon="auto-awesome" label="Insights" onPress={() => router.push('/insights')} />
@@ -292,13 +312,15 @@ export default function ScheduleScreen() {
                   <MaterialIcons name="arrow-drop-down" size={22} color={colors.onSurfaceVariant} />
                 </Pressable>
               </View>
-              <TextInput
-                style={styles.modalInput}
-                placeholder="Pond name"
-                placeholderTextColor={colors.onSurfaceVariant}
-                value={newPond}
-                onChangeText={setNewPond}
-              />
+              <View style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>Pond</Text>
+                <Pressable style={styles.dropdownButton} onPress={() => setPondMenuOpen(true)}>
+                  <Text style={[styles.dropdownButtonText, !newPond && styles.dropdownPlaceholder]}>
+                    {newPond || 'Select pond'}
+                  </Text>
+                  <MaterialIcons name="arrow-drop-down" size={22} color={colors.onSurfaceVariant} />
+                </Pressable>
+              </View>
               <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Fish Type</Text>
                 <Pressable style={styles.dropdownButton} onPress={() => setFishMenuOpen(true)}>
@@ -374,6 +396,38 @@ export default function ScheduleScreen() {
                 </View>
               </View>
               <Pressable style={styles.pickerDoneButton} onPress={() => setScheduleTimeMenuOpen(false)}>
+                <Text style={styles.pickerDoneButtonText}>Done</Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
+
+        <Modal transparent visible={pondMenuOpen} animationType="fade" onRequestClose={() => setPondMenuOpen(false)}>
+          <Pressable style={styles.dropdownOverlay} onPress={() => setPondMenuOpen(false)}>
+            <Pressable style={styles.fishPickerSheet} onPress={() => {}}>
+              <Text style={styles.timePickerTitle}>Select pond</Text>
+              <View style={styles.fishOptionList}>
+                {ponds.length > 0 ? (
+                  ponds.map((p) => (
+                    <Pressable
+                      key={p.id}
+                      style={[styles.fishOption, newPond === p.name && styles.dropdownOptionSelected]}
+                      onPress={() => {
+                        setNewPond(p.name);
+                        if (p.type) setNewFishType(p.type);
+                        setPondMenuOpen(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownOptionText}>{p.name}{p.type ? ` (${p.type})` : ''}</Text>
+                    </Pressable>
+                  ))
+                ) : (
+                  <Text style={{ textAlign: 'center', color: colors.onSurfaceVariant, paddingVertical: 12 }}>
+                    No ponds registered yet. You can type or add ponds in Dashboard.
+                  </Text>
+                )}
+              </View>
+              <Pressable style={styles.pickerDoneButton} onPress={() => setPondMenuOpen(false)}>
                 <Text style={styles.pickerDoneButtonText}>Done</Text>
               </Pressable>
             </Pressable>

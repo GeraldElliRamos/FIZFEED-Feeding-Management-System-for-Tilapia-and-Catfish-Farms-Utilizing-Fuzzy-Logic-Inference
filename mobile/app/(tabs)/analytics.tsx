@@ -1,8 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, View, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePonds, useSchedules } from '../../hooks/useFirestore';
 
@@ -48,6 +48,9 @@ export default function AnalyticsScreen() {
   const router = useRouter();
   const { ponds, loading: pondsLoading } = usePonds();
   const { schedules, loading: schedulesLoading } = useSchedules();
+  const [period, setPeriod] = useState<'7' | '30' | '90'>('7');
+  const [periodMenuOpen, setPeriodMenuOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   if (pondsLoading || schedulesLoading) {
     return (
@@ -56,6 +59,11 @@ export default function AnalyticsScreen() {
       </View>
     );
   }
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => setRefreshing(false), 800);
+  };
 
   const totalDailyFeed = schedules.reduce((sum, s) => sum + (Number(s.amountKg) || 0), 0);
   const totalFed7Days = (totalDailyFeed * 7).toFixed(1);
@@ -74,7 +82,8 @@ export default function AnalyticsScreen() {
 
   const isAllOnline = ponds.length > 0 && ponds.every(p => p.isConnected !== false);
   const healthText = isAllOnline ? 'All Sensors Online' : ponds.length === 0 ? 'No Sensors Found' : 'Some Sensors Offline';
-  const aiRecPond = schedules.length > 0 ? schedules[0].pondName : ponds.length > 0 ? ponds[0].name : 'your ponds';
+
+  const periodLabel = period === '7' ? 'Last 7 Days' : period === '30' ? 'Last 30 Days' : 'Last 90 Days';
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -95,34 +104,51 @@ export default function AnalyticsScreen() {
                 <Text style={styles.brandSubText}>Intelligent Aquaculture</Text>
               </View>
             </View>
-            <Pressable style={styles.menuButton}>
+            <Pressable style={styles.menuButton} onPress={() => router.push('/profile')}>
               <MaterialIcons name="menu" size={22} color={colors.onPrimary} />
             </Pressable>
           </View>
-        </LinearGradient>
-
-        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Screen Title & Back Navigation */}
-          <View style={styles.titleSection}>
-            <Pressable style={styles.backButton} onPress={() => router.replace('/')}>
-              <MaterialIcons name="arrow-back" size={24} color={colors.onSurfaceVariant} />
-            </Pressable>
+          <View style={styles.headerBottomRow}>
             <View>
               <Text style={styles.pageTitle}>Analytics</Text>
               <Text style={styles.pageSubtitle}>Performance insights & trends</Text>
             </View>
           </View>
+        </LinearGradient>
 
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
           {/* Date Range Selector */}
           <View style={styles.dateSelectorCard}>
             <View style={styles.dateSelectorLeft}>
               <MaterialIcons name="calendar-month" size={20} color={colors.primary} />
-              <Text style={styles.dateSelectorText}>Last 7 Days</Text>
+              <Text style={styles.dateSelectorText}>{periodLabel}</Text>
             </View>
-            <Pressable>
+            <Pressable onPress={() => setPeriodMenuOpen(true)}>
               <Text style={styles.changePeriodText}>Change Period</Text>
             </Pressable>
           </View>
+
+          {/* Period Selector Modal */}
+          <Modal visible={periodMenuOpen} transparent animationType="fade">
+            <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setPeriodMenuOpen(false)}>
+              <View style={{ backgroundColor: '#fff', width: '80%', borderRadius: 16, padding: 20, gap: 12 }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: colors.onSurface, marginBottom: 8 }}>Select Timeframe</Text>
+                {[
+                  { key: '7', label: 'Last 7 Days' },
+                  { key: '30', label: 'Last 30 Days' },
+                  { key: '90', label: 'Last 90 Days' },
+                ].map((item) => (
+                  <Pressable
+                    key={item.key}
+                    onPress={() => { setPeriod(item.key as any); setPeriodMenuOpen(false); }}
+                    style={{ paddingVertical: 12, paddingHorizontal: 16, borderRadius: 10, backgroundColor: period === item.key ? '#e8f0fe' : '#f8f9fa' }}
+                  >
+                    <Text style={{ fontSize: 14, fontWeight: period === item.key ? '700' : '500', color: period === item.key ? colors.primary : colors.onSurface }}>{item.label}</Text>
+                  </Pressable>
+                ))}
+              </View>
+            </Pressable>
+          </Modal>
 
           {/* Summary Grid */}
           <View style={styles.summaryGrid}>
@@ -210,15 +236,15 @@ export default function AnalyticsScreen() {
                   <Text style={styles.healthStatusText}>{healthText}</Text>
                 </View>
               </View>
-              <Pressable style={styles.refreshButton}>
-                <MaterialIcons name="refresh" size={24} color={colors.primary} />
+              <Pressable style={styles.refreshButton} onPress={handleRefresh}>
+                <MaterialIcons name="refresh" size={24} color={colors.primary} style={{ transform: [{ rotate: refreshing ? '180deg' : '0deg' }] }} />
               </Pressable>
             </View>
           </View>
         </ScrollView>
 
         <View style={styles.bottomNav}>
-          <BottomNavItem icon="home" label="Home" onPress={() => router.replace('/')} />
+          <BottomNavItem icon="home" label="Home" onPress={() => router.replace('/(tabs)')} />
           <BottomNavItem icon="calendar-month" label="Schedule" onPress={() => router.replace('/schedule')} />
           <BottomNavItem icon="bar-chart" label="Analytics" active />
           <BottomNavItem icon="auto-awesome" label="Insights" onPress={() => router.push('/insights')} />
@@ -240,10 +266,9 @@ const styles = StyleSheet.create({
     gap: 24,
   },
   header: {
-    minHeight: 110,
     paddingHorizontal: 16,
+    paddingTop: 12,
     paddingBottom: 16,
-    justifyContent: 'flex-end',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -254,6 +279,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 14,
+  },
+  headerBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
   },
   brandRow: {
     flexDirection: 'row',
@@ -261,9 +292,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   logoBlock: {
-    width: 24,
-    height: 24,
-    borderRadius: 6,
+    width: 28,
+    height: 28,
+    borderRadius: 8,
     backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -280,28 +311,22 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   menuButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-  },
-  titleSection: {
-    flexDirection: 'row',
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
-    gap: 16,
-  },
-  backButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: colors.surfaceHigh,
+    justifyContent: 'center',
   },
   pageTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: colors.onSurface,
+    color: colors.onPrimary,
   },
   pageSubtitle: {
-    fontSize: 14,
-    color: colors.onSurfaceVariant,
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.75)',
+    marginTop: 2,
   },
   dateSelectorCard: {
     backgroundColor: colors.surfaceAlt,

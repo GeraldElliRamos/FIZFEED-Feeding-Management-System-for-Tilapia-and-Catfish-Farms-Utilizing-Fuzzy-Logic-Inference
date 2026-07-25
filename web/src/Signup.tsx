@@ -14,6 +14,8 @@ function Signup() {
   const { user, loading } = useAuth();
 
   const [fullName, setFullName] = useState("");
+  const [farmName, setFarmName] = useState("");
+  const [address, setAddress] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("farm_owner");
@@ -58,9 +60,10 @@ function Signup() {
         displayName: fullName.trim(),
         email: email,
         role,
-        farmName: "",
+        farmName: farmName.trim() || "My Aqua Farm",
+        address: address.trim(),
         phone: "",
-        location: "",
+        location: address.trim(),
         createdAt: serverTimestamp()
       });
 
@@ -119,6 +122,37 @@ function Signup() {
                 onChange={(e) => setFullName(e.target.value)}
                 disabled={isSubmitting}
                 autoComplete="name"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Farm Name</label>
+              <input
+                type="text"
+                placeholder="Oceanic Aqua Farm"
+                value={farmName}
+                onChange={(e) => setFarmName(e.target.value)}
+                disabled={isSubmitting}
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Farm Address</label>
+              <textarea
+                placeholder="Street, Barangay, City, Province"
+                rows={2}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                disabled={isSubmitting}
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  borderRadius: "10px",
+                  border: "1px solid #e5e7eb",
+                  fontSize: "14px",
+                  fontFamily: "inherit",
+                  resize: "vertical"
+                }}
               />
             </div>
 
@@ -190,8 +224,8 @@ function Signup() {
             <div className="terms">
               <input type="checkbox" id="terms" required />
               <label htmlFor="terms">
-                I agree to the <a href="#">Terms of Service</a> and{" "}
-                <a href="#">Privacy Policy</a>.
+                I agree to the <button type="button" style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", padding: 0 }} onClick={() => alert("FIZFEED Terms of Service:\n1. Use system responsibly.\n2. Do not overload feeding schedules.\n3. Ensure IoT hardware security.")}>Terms of Service</button> and{" "}
+                <button type="button" style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", padding: 0 }} onClick={() => alert("FIZFEED Privacy Policy:\nYour farm telemetry, sensor logs, and account credentials are saved securely in Firebase Cloud Firestore and never shared with third parties.")}>Privacy Policy</button>.
               </label>
             </div>
 
@@ -218,9 +252,9 @@ function Signup() {
           <p>© 2024 FIZFEED Aquatic Intelligence. All rights reserved.</p>
 
           <div className="footer-links">
-            <a href="#">Privacy Policy</a>
-            <a href="#">Terms</a>
-            <a href="#">Support</a>
+            <button type="button" style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", padding: 0 }} onClick={() => alert("FIZFEED Privacy Policy:\nYour farm telemetry, sensor logs, and account credentials are saved securely in Firebase Cloud Firestore.")}>Privacy Policy</button>
+            <button type="button" style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", padding: 0 }} onClick={() => alert("FIZFEED Terms of Service:\n1. Use system responsibly.\n2. Maintain sensor hardware.")}>Terms</button>
+            <button type="button" style={{ background: "none", border: "none", color: "#2563eb", cursor: "pointer", padding: 0 }} onClick={() => alert("FIZFEED Support:\nContact us at support@fizfeed.com for assistance with sensors or feeding algorithms.")}>Support</button>
           </div>
         </div>
       </footer>

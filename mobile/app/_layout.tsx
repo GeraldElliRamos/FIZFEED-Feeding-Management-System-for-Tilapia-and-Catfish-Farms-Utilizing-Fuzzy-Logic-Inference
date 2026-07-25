@@ -11,14 +11,16 @@ type Role = 'admin' | 'farm_owner' | 'farm_staff' | 'viewer';
 
 const tabAccess: Record<string, Role[]> = {
   index: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
+  dashboard: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
   schedule: ['admin', 'farm_owner', 'farm_staff'],
   analytics: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
+  insights: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
   alerts: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
   profile: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
 };
 
 function getDefaultTabPath(_role: Role | undefined) {
-  return '/(tabs)/index' as const;
+  return '/(tabs)' as const;
 }
 
 /* ── Auth Guard: redirects unauthenticated users away from protected screens ── */

@@ -5,6 +5,7 @@ import { useState } from 'react';
 import {
   Alert,
   Image,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -60,6 +61,16 @@ export default function LoginScreen() {
 
   return (
     <View style={styles.outerBg}>
+      {Platform.OS === 'web' && (
+        <style>{`
+          html, body, #root {
+            background-color: #005BBF !important;
+            min-height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+        `}</style>
+      )}
       <View style={styles.bgBase} />
       <View style={styles.bgGradientTop} />
       <View style={styles.bgGradientBottom} />
@@ -259,41 +270,48 @@ const styles = StyleSheet.create({
   logoCard: {
     width: 76,
     height: 76,
-    borderRadius: 22,
+    borderRadius: 20,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
+    padding: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   logo: {
     width: '85%',
     height: '85%',
   },
   brandName: {
-    marginTop: 10,
-    fontSize: 18,
+    marginTop: 8,
+    fontSize: 17,
     fontWeight: '800',
-    color: '#0f172a',
-    letterSpacing: 3,
+    color: '#0F172A',
+    letterSpacing: 2.5,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 6,
+    color: '#0F172A',
+    marginBottom: 4,
   },
   subtitle: {
     fontSize: 13,
-    color: '#64748b',
+    color: '#64748B',
     textAlign: 'center',
   },
   form: {
     width: '100%',
-    gap: 10,
+    gap: 14,
   },
   fieldGroup: {
     gap: 6,
@@ -306,12 +324,12 @@ const styles = StyleSheet.create({
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#f8fafc',
+    backgroundColor: '#F8FAFC',
     borderRadius: 14,
     paddingHorizontal: 14,
-    height: 46,
+    height: 48,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#E2E8F0',
   },
   inputIcon: {
     marginRight: 10,
@@ -319,7 +337,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     fontSize: 14,
-    color: '#0f172a',
+    color: '#0F172A',
     height: '100%',
   },
   passwordInput: {
@@ -330,12 +348,12 @@ const styles = StyleSheet.create({
   },
   forgotRow: {
     alignSelf: 'flex-end',
-    marginTop: 2,
+    marginTop: -4,
   },
   forgotText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#2563eb',
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: '#2563EB',
   },
   loginBtn: {
     flexDirection: 'row',
@@ -343,8 +361,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     borderRadius: 14,
-    paddingVertical: 13,
-    marginTop: 6,
+    paddingVertical: 14,
+    marginTop: 4,
     backgroundColor: '#005BBF',
     shadowColor: '#005BBF',
     shadowOffset: { width: 0, height: 4 },
@@ -362,23 +380,21 @@ const styles = StyleSheet.create({
   loginText: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#ffffff',
+    color: '#FFFFFF',
   },
   secondaryAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 20,
     justifyContent: 'center',
-    flexWrap: 'wrap',
-    rowGap: 4,
   },
   secondaryText: {
     fontSize: 13,
-    color: '#64748b',
+    color: '#64748B',
   },
   secondaryLink: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2563eb',
+    color: '#2563EB',
   },
 });

@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { createUserWithEmailAndPassword, updateProfile, AuthError } from 'firebase/auth';
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -16,6 +16,7 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { doc, setDoc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
@@ -49,7 +50,6 @@ export default function SignUpScreen() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleCreateAccount = async () => {
-    // — Validation —
     if (!fullName.trim()) {
       Alert.alert('Missing Field', 'Please enter your full name.');
       return;
@@ -73,18 +73,15 @@ export default function SignUpScreen() {
 
     setIsLoading(true);
     try {
-      // 1. Create Firebase Auth User
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       const uid = userCredential.user.uid;
 
-      // 2. Update Auth Profile
       try {
         await updateProfile(userCredential.user, { displayName: fullName.trim() });
       } catch (pErr) {
         console.warn("Profile update warning:", pErr);
       }
       
-      // 3. Create User Document in Firestore (Required)
       try {
         await setDoc(doc(db, "users", uid), {
           displayName: fullName.trim(),
@@ -96,7 +93,6 @@ export default function SignUpScreen() {
           location: address.trim(),
           createdAt: serverTimestamp()
         });
-        console.log("Firestore User Document Created successfully at users/" + uid);
       } catch (docErr: any) {
         console.error("Failed writing Firestore user document:", docErr);
         Alert.alert('Firestore Error', `Account created, but writing user data failed: ${docErr?.message || docErr}`);
@@ -104,7 +100,6 @@ export default function SignUpScreen() {
         return;
       }
       
-      // 4. Populate default collections for the user
       try {
         const pondsRef = collection(db, "users", uid, "ponds");
         await addDoc(pondsRef, { name: "Pond A", fishType: "Tilapia", capacity: 25, currentStock: 18.5, dailyUsage: 8.2 });
@@ -129,390 +124,399 @@ export default function SignUpScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.outerBg}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.bgBase} />
-      <View style={styles.bgGradientTop} />
-      <View style={styles.bgGradientBottom} />
-      <View style={[styles.decorCircle, styles.decorCircleTopRight]} />
-      <View style={[styles.decorCircle, styles.decorCircleBottomLeft]} />
-      <View style={[styles.decorCircleSmall, styles.decorCircleTopLeft]} />
-
-      <ScrollView
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.outerBg} edges={['top', 'bottom']}>
+      {Platform.OS === 'web' && (
+        <style>{`
+          html, body, #root {
+            background-color: #005BBF !important;
+            min-height: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+          }
+        `}</style>
+      )}
+      <KeyboardAvoidingView
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.card}>
-          <View style={styles.logoContainer}>
-            <View style={styles.logoCard}>
-              <Image
-                source={require('../assets/images/splash-icon.png')}
-                style={styles.logo}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={styles.brandName}>FIZFEED</Text>
-          </View>
-
-          <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Enter your details to start managing your farm.</Text>
-          </View>
-
-          <View style={styles.form}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Full Name</Text>
-              <View style={styles.inputWrapper}>
-                <MaterialCommunityIcons name="account-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="John Doe"
-                  placeholderTextColor="#94a3b8"
-                  value={fullName}
-                  onChangeText={setFullName}
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                  editable={!isLoading}
+        <ScrollView
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.card}>
+            {/* Header with Logo */}
+            <View style={styles.logoContainer}>
+              <View style={styles.logoCard}>
+                <Image
+                  source={require('../assets/images/splash-icon.png')}
+                  style={styles.logo}
+                  resizeMode="contain"
                 />
               </View>
+              <Text style={styles.brandName}>FIZFEED</Text>
             </View>
 
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Farm Name</Text>
-              <View style={styles.inputWrapper}>
-                <MaterialCommunityIcons name="home-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="Oceanic Aqua Farm"
-                  placeholderTextColor="#94a3b8"
-                  value={farmName}
-                  onChangeText={setFarmName}
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                  editable={!isLoading}
-                />
-              </View>
+            <View style={styles.header}>
+              <Text style={styles.title}>Create Account</Text>
+              <Text style={styles.subtitle}>Enter your details to start managing your farm.</Text>
             </View>
 
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Farm Address</Text>
-              <View style={[styles.inputWrapper, styles.inputWrapperMultiline]}>
-                <MaterialCommunityIcons name="map-marker-outline" size={20} color="#94a3b8" style={[styles.inputIcon, { alignSelf: 'flex-start', marginTop: 12 }]} />
-                <TextInput
-                  style={[styles.input, styles.addressInput]}
-                  placeholder="Street, Barangay, City, Province"
-                  placeholderTextColor="#94a3b8"
-                  value={address}
-                  onChangeText={setAddress}
-                  autoCapitalize="words"
-                  returnKeyType="next"
-                  multiline
-                  numberOfLines={3}
-                  editable={!isLoading}
-                />
-              </View>
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Role</Text>
-              <View style={styles.roleOptions}>
-                {[
-                  { key: 'admin', label: 'Admin' },
-                  { key: 'farm_owner', label: 'Farm Owner' },
-                  { key: 'farm_staff', label: 'Farm Staff' },
-                  { key: 'viewer', label: 'Viewer' },
-                ].map((item) => (
-                  <Pressable
-                    key={item.key}
-                    onPress={() => setRole(item.key as typeof role)}
-                    style={({ pressed }) => [
-                      styles.roleOption,
-                      role === item.key && styles.roleOptionActive,
-                      pressed && styles.roleOptionPressed,
-                    ]}
-                    disabled={isLoading}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Select role ${item.label}`}
-                  >
-                    <Text style={[styles.roleOptionText, role === item.key && styles.roleOptionTextActive]}>
-                      {item.label}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Email Address</Text>
-              <View style={styles.inputWrapper}>
-                <MaterialCommunityIcons name="email-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="you@example.com"
-                  placeholderTextColor="#94a3b8"
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  editable={!isLoading}
-                />
-              </View>
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Password</Text>
-              <View style={styles.inputWrapper}>
-                <MaterialCommunityIcons name="lock-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, styles.passwordInput]}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94a3b8"
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="next"
-                  editable={!isLoading}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowPassword(!showPassword)}
-                  style={styles.eyeBtn}
-                  activeOpacity={0.7}
-                  accessibilityLabel={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  <MaterialCommunityIcons
-                    name={showPassword ? 'eye-outline' : 'eye-off-outline'}
-                    size={20}
-                    color="#94a3b8"
+            {/* Form */}
+            <View style={styles.form}>
+              {/* Full Name */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Full Name</Text>
+                <View style={styles.inputWrapper}>
+                  <MaterialCommunityIcons name="account-outline" size={18} color="#94a3b8" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="John Doe"
+                    placeholderTextColor="#94a3b8"
+                    value={fullName}
+                    onChangeText={setFullName}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                    editable={!isLoading}
                   />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <View style={styles.inputWrapper}>
-                <MaterialCommunityIcons name="lock-outline" size={20} color="#94a3b8" style={styles.inputIcon} />
-                <TextInput
-                  style={[styles.input, styles.passwordInput]}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94a3b8"
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
-                  secureTextEntry={!showConfirmPassword}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  returnKeyType="done"
-                  onSubmitEditing={handleCreateAccount}
-                  editable={!isLoading}
-                />
-                <TouchableOpacity
-                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-                  style={styles.eyeBtn}
-                  activeOpacity={0.7}
-                  accessibilityLabel={showConfirmPassword ? 'Hide password' : 'Show password'}
-                >
-                  <MaterialCommunityIcons
-                    name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'}
-                    size={20}
-                    color="#94a3b8"
-                  />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            <View style={styles.termsRow}>
-              <TouchableOpacity
-                style={styles.checkboxWrap}
-                onPress={() => setTermsAccepted(!termsAccepted)}
-                activeOpacity={0.7}
-                disabled={isLoading}
-              >
-                <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
-                  {termsAccepted && <MaterialCommunityIcons name="check" size={12} color="#fff" />}
                 </View>
-              </TouchableOpacity>
-              <Text style={styles.termsText}>
-                I agree to the <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
-                <Text style={styles.termsLink}>Privacy Policy</Text>.
-              </Text>
+              </View>
+
+              {/* Farm Name */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Farm Name</Text>
+                <View style={styles.inputWrapper}>
+                  <MaterialCommunityIcons name="home-outline" size={18} color="#94a3b8" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Oceanic Aqua Farm"
+                    placeholderTextColor="#94a3b8"
+                    value={farmName}
+                    onChangeText={setFarmName}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                    editable={!isLoading}
+                  />
+                </View>
+              </View>
+
+              {/* Farm Address */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Farm Address</Text>
+                <View style={styles.inputWrapper}>
+                  <MaterialCommunityIcons name="map-marker-outline" size={18} color="#94a3b8" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Street, Barangay, City, Province"
+                    placeholderTextColor="#94a3b8"
+                    value={address}
+                    onChangeText={setAddress}
+                    autoCapitalize="words"
+                    returnKeyType="next"
+                    editable={!isLoading}
+                  />
+                </View>
+              </View>
+
+              {/* Role Options */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Role</Text>
+                <View style={styles.roleOptions}>
+                  {[
+                    { key: 'admin', label: 'Admin' },
+                    { key: 'farm_owner', label: 'Farm Owner' },
+                    { key: 'farm_staff', label: 'Farm Staff' },
+                    { key: 'viewer', label: 'Viewer' },
+                  ].map((item) => (
+                    <Pressable
+                      key={item.key}
+                      onPress={() => setRole(item.key as typeof role)}
+                      style={({ pressed }) => [
+                        styles.roleOption,
+                        role === item.key && styles.roleOptionActive,
+                        pressed && styles.roleOptionPressed,
+                      ]}
+                      disabled={isLoading}
+                      accessibilityRole="button"
+                    >
+                      <Text style={[styles.roleOptionText, role === item.key && styles.roleOptionTextActive]}>
+                        {item.label}
+                      </Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </View>
+
+              {/* Email Address */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Email Address</Text>
+                <View style={styles.inputWrapper}>
+                  <MaterialCommunityIcons name="email-outline" size={18} color="#94a3b8" style={styles.inputIcon} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="you@example.com"
+                    placeholderTextColor="#94a3b8"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    editable={!isLoading}
+                  />
+                </View>
+              </View>
+
+              {/* Password */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Password</Text>
+                <View style={styles.inputWrapper}>
+                  <MaterialCommunityIcons name="lock-outline" size={18} color="#94a3b8" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, styles.passwordInput]}
+                    placeholder="••••••••"
+                    placeholderTextColor="#94a3b8"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry={!showPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="next"
+                    editable={!isLoading}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowPassword(!showPassword)}
+                    style={styles.eyeBtn}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons
+                      name={showPassword ? 'eye-outline' : 'eye-off-outline'}
+                      size={18}
+                      color="#94a3b8"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Confirm Password */}
+              <View style={styles.fieldGroup}>
+                <Text style={styles.label}>Confirm Password</Text>
+                <View style={styles.inputWrapper}>
+                  <MaterialCommunityIcons name="lock-outline" size={18} color="#94a3b8" style={styles.inputIcon} />
+                  <TextInput
+                    style={[styles.input, styles.passwordInput]}
+                    placeholder="••••••••"
+                    placeholderTextColor="#94a3b8"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry={!showConfirmPassword}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    returnKeyType="done"
+                    onSubmitEditing={handleCreateAccount}
+                    editable={!isLoading}
+                  />
+                  <TouchableOpacity
+                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                    style={styles.eyeBtn}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons
+                      name={showConfirmPassword ? 'eye-outline' : 'eye-off-outline'}
+                      size={18}
+                      color="#94a3b8"
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Terms Checkbox */}
+              <View style={styles.termsRow}>
+                <TouchableOpacity
+                  style={styles.checkboxWrap}
+                  onPress={() => setTermsAccepted(!termsAccepted)}
+                  activeOpacity={0.7}
+                  disabled={isLoading}
+                >
+                  <View style={[styles.checkbox, termsAccepted && styles.checkboxChecked]}>
+                    {termsAccepted && <MaterialCommunityIcons name="check" size={12} color="#fff" />}
+                  </View>
+                </TouchableOpacity>
+                <Text style={styles.termsText}>
+                  I agree to the <Text style={styles.termsLink}>Terms of Service</Text> and{' '}
+                  <Text style={styles.termsLink}>Privacy Policy</Text>.
+                </Text>
+              </View>
+
+              {/* Submit Button */}
+              <Pressable
+                style={({ pressed }) => [
+                  styles.createBtn,
+                  pressed && styles.createBtnPressed,
+                  isLoading && styles.createBtnDisabled,
+                ]}
+                onPress={handleCreateAccount}
+                disabled={isLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Create Account"
+              >
+                {isLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Text style={styles.createText}>Create Account</Text>
+                    <MaterialCommunityIcons name="arrow-right" size={16} color="#fff" />
+                  </>
+                )}
+              </Pressable>
             </View>
 
-            <Pressable
-              style={({ pressed }) => [
-                styles.createBtn,
-                pressed && styles.createBtnPressed,
-                isLoading && styles.createBtnDisabled,
-              ]}
-              onPress={handleCreateAccount}
-              disabled={isLoading}
-              accessibilityRole="button"
-              accessibilityLabel="Create Account"
-            >
-              {isLoading ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <>
-                  <Text style={styles.createText}>Create Account</Text>
-                  <MaterialCommunityIcons name="arrow-right" size={18} color="#fff" />
-                </>
-              )}
-            </Pressable>
+            {/* Footer */}
+            <View style={styles.secondaryAction}>
+              <Text style={styles.secondaryText}>Already have an account? </Text>
+              <TouchableOpacity onPress={() => router.replace('/login')} activeOpacity={0.7} disabled={isLoading}>
+                <Text style={styles.secondaryLink}>Sign In</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-
-          <View style={styles.secondaryAction}>
-            <Text style={styles.secondaryText}>Already have an account? </Text>
-            <TouchableOpacity onPress={() => router.replace('/login')} activeOpacity={0.7} disabled={isLoading}>
-              <Text style={styles.secondaryLink}>Sign In</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   outerBg: {
     flex: 1,
     backgroundColor: '#005BBF',
-    overflow: 'hidden',
   },
-  bgBase: {
-    ...StyleSheet.absoluteFillObject,
+  keyboardContainer: {
+    flex: 1,
     backgroundColor: '#005BBF',
   },
-  bgGradientTop: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    backgroundColor: '#0047A0',
-    opacity: 0.6,
-  },
-  bgGradientBottom: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: '50%',
-    backgroundColor: '#006874',
-    opacity: 0.45,
-  },
-  decorCircle: {
-    position: 'absolute',
-    borderRadius: 9999,
-    backgroundColor: 'rgba(255,255,255,0.07)',
-  },
-  decorCircleTopRight: {
-    width: 220,
-    height: 220,
-    top: -60,
-    right: -60,
-  },
-  decorCircleBottomLeft: {
-    width: 300,
-    height: 300,
-    bottom: -100,
-    left: -100,
-  },
-  decorCircleSmall: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-  },
-  decorCircleTopLeft: {
-    width: 120,
-    height: 120,
-    top: 60,
-    left: -30,
+  scrollView: {
+    flex: 1,
+    backgroundColor: '#005BBF',
   },
   scrollContent: {
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 28,
-    paddingHorizontal: 20,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    backgroundColor: '#005BBF',
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.96)',
+    backgroundColor: '#FFFFFF',
     width: '100%',
-    maxWidth: 420,
-    borderRadius: 20,
-    paddingHorizontal: 28,
-    paddingTop: 28,
-    paddingBottom: 24,
+    maxWidth: 400,
+    borderRadius: 22,
+    paddingHorizontal: 22,
+    paddingTop: 24,
+    paddingBottom: 22,
     alignItems: 'center',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.22,
-    shadowRadius: 28,
-    elevation: 14,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 24,
+    elevation: 12,
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   logoCard: {
-    width: 76,
-    height: 76,
-    borderRadius: 22,
+    width: 56,
+    height: 56,
+    borderRadius: 15,
     backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 10,
+    padding: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
   logo: {
     width: '85%',
     height: '85%',
   },
   brandName: {
-    marginTop: 10,
-    fontSize: 18,
+    marginTop: 6,
+    fontSize: 16,
     fontWeight: '800',
-    color: '#0f172a',
-    letterSpacing: 3,
+    color: '#0F172A',
+    letterSpacing: 2,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '700',
-    color: '#0f172a',
-    marginBottom: 6,
+    color: '#0F172A',
+    marginBottom: 2,
   },
   subtitle: {
-    fontSize: 13,
-    color: '#64748b',
+    fontSize: 12,
+    color: '#64748B',
     textAlign: 'center',
   },
   form: {
     width: '100%',
-    gap: 10,
+    gap: 9,
   },
   fieldGroup: {
-    gap: 6,
+    gap: 4,
+  },
+  label: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  inputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    height: 42,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  inputIcon: {
+    marginRight: 8,
+  },
+  input: {
+    flex: 1,
+    fontSize: 13,
+    color: '#0F172A',
+    height: '100%',
+  },
+  passwordInput: {
+    paddingRight: 6,
+  },
+  eyeBtn: {
+    padding: 3,
   },
   roleOptions: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 8,
+    gap: 6,
   },
   roleOption: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
     borderRadius: 999,
-    backgroundColor: '#eef2ff',
+    backgroundColor: '#EEF2FF',
     borderWidth: 1,
-    borderColor: '#c7d2fe',
+    borderColor: '#C7D2FE',
   },
   roleOptionPressed: {
     opacity: 0.85,
@@ -522,71 +526,29 @@ const styles = StyleSheet.create({
     borderColor: '#005BBF',
   },
   roleOptionText: {
-    fontSize: 12,
+    fontSize: 11.5,
     fontWeight: '700',
-    color: '#1e3a8a',
+    color: '#1E3A8A',
   },
   roleOptionTextActive: {
-    color: '#ffffff',
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#334155',
-  },
-  inputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f8fafc',
-    borderRadius: 14,
-    paddingHorizontal: 14,
-    height: 46,
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-  },
-  inputWrapperMultiline: {
-    height: 'auto',
-    minHeight: 80,
-    alignItems: 'flex-start',
-    paddingVertical: 8,
-  },
-  inputIcon: {
-    marginRight: 10,
-  },
-  input: {
-    flex: 1,
-    fontSize: 14,
-    color: '#0f172a',
-    height: '100%',
-  },
-  addressInput: {
-    height: undefined,
-    minHeight: 60,
-    textAlignVertical: 'top',
-    paddingTop: 4,
-  },
-  passwordInput: {
-    paddingRight: 8,
-  },
-  eyeBtn: {
-    padding: 4,
+    color: '#FFFFFF',
   },
   termsRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    paddingTop: 4,
-  },
-  checkboxWrap: {
+    gap: 8,
     paddingTop: 2,
   },
+  checkboxWrap: {
+    paddingTop: 1,
+  },
   checkbox: {
-    width: 18,
-    height: 18,
+    width: 16,
+    height: 16,
     borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: '#cbd5e1',
-    backgroundColor: '#fff',
+    borderColor: '#CBD5E1',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -596,28 +558,28 @@ const styles = StyleSheet.create({
   },
   termsText: {
     flex: 1,
-    fontSize: 12,
-    lineHeight: 18,
-    color: '#64748b',
+    fontSize: 11,
+    lineHeight: 16,
+    color: '#64748B',
   },
   termsLink: {
-    color: '#2563eb',
+    color: '#2563EB',
     fontWeight: '700',
   },
   createBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    borderRadius: 14,
-    paddingVertical: 13,
-    marginTop: 6,
+    gap: 6,
+    borderRadius: 10,
+    paddingVertical: 11,
+    marginTop: 4,
     backgroundColor: '#005BBF',
     shadowColor: '#005BBF',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.35,
-    shadowRadius: 12,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   createBtnPressed: {
     opacity: 0.9,
@@ -627,25 +589,24 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   createText: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
-    color: '#ffffff',
+    color: '#FFFFFF',
   },
   secondaryAction: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 14,
     justifyContent: 'center',
     flexWrap: 'wrap',
-    rowGap: 4,
   },
   secondaryText: {
-    fontSize: 13,
-    color: '#64748b',
+    fontSize: 12,
+    color: '#64748B',
   },
   secondaryLink: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
-    color: '#2563eb',
+    color: '#2563EB',
   },
 });

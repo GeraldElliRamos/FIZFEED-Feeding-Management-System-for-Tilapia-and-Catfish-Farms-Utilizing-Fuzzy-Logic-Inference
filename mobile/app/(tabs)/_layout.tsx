@@ -69,6 +69,7 @@ export default function TabLayout() {
         },
       }}>
       <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} /> }} />
+      <Tabs.Screen name="explore" options={{ href: null }} />
       {tabAccess.schedule.includes(role) && <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: ({ color }) => <MaterialIcons name="calendar-month" size={24} color={color} /> }} />}
       {tabAccess.analytics.includes(role) && <Tabs.Screen name="analytics" options={{ title: 'Analytics', tabBarIcon: ({ color }) => <MaterialIcons name="bar-chart" size={24} color={color} /> }} />}
       {tabAccess.insights.includes(role) && <Tabs.Screen name="insights" options={{ title: 'Insights', tabBarIcon: ({ color }) => <MaterialIcons name="auto-awesome" size={24} color={color} /> }} />}

@@ -24,7 +24,7 @@ export default function TabLayout() {
   const { profile, loading } = useUserProfile();
   const role = profile?.role as Role | undefined;
 
-  if (loading) {
+  if (loading || !role) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={colors.primary} />
@@ -60,20 +60,20 @@ export default function TabLayout() {
           borderTopWidth: 0,
         },
         tabBarLabelStyle: {
-          fontSize: fontSize["label-sm"][0],
-          fontWeight: fontFamily["label-sm"][0].fontWeight,
+          fontSize: fontSize["label-sm"][0] as number,
+          fontWeight: '500',
           fontFamily: fontFamily["label-sm"][0],
         },
         tabBarIconStyle: {
           // marginBottom: -3,
         },
       }}>
-      {role && tabAccess.index.includes(role) && <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} /> }} />}
-      {role && tabAccess.schedule.includes(role) && <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: ({ color }) => <MaterialIcons name="calendar-month" size={24} color={color} /> }} />}
-      {role && tabAccess.analytics.includes(role) && <Tabs.Screen name="analytics" options={{ title: 'Analytics', tabBarIcon: ({ color }) => <MaterialIcons name="bar-chart" size={24} color={color} /> }} />}
-      {role && tabAccess.insights.includes(role) && <Tabs.Screen name="insights" options={{ title: 'Insights', tabBarIcon: ({ color }) => <MaterialIcons name="auto-awesome" size={24} color={color} /> }} />}
-      {role && tabAccess.alerts.includes(role) && <Tabs.Screen name="alerts" options={{ title: 'Alerts', tabBarIcon: ({ color }) => <MaterialIcons name="notifications" size={24} color={color} /> }} />}
-      {role && tabAccess.profile.includes(role) && <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => <MaterialIcons name="person" size={24} color={color} /> }} />}
+      <Tabs.Screen name="index" options={{ title: 'Home', tabBarIcon: ({ color }) => <MaterialIcons name="home" size={24} color={color} /> }} />
+      {tabAccess.schedule.includes(role) && <Tabs.Screen name="schedule" options={{ title: 'Schedule', tabBarIcon: ({ color }) => <MaterialIcons name="calendar-month" size={24} color={color} /> }} />}
+      {tabAccess.analytics.includes(role) && <Tabs.Screen name="analytics" options={{ title: 'Analytics', tabBarIcon: ({ color }) => <MaterialIcons name="bar-chart" size={24} color={color} /> }} />}
+      {tabAccess.insights.includes(role) && <Tabs.Screen name="insights" options={{ title: 'Insights', tabBarIcon: ({ color }) => <MaterialIcons name="auto-awesome" size={24} color={color} /> }} />}
+      {tabAccess.alerts.includes(role) && <Tabs.Screen name="alerts" options={{ title: 'Alerts', tabBarIcon: ({ color }) => <MaterialIcons name="notifications" size={24} color={color} /> }} />}
+      {tabAccess.profile.includes(role) && <Tabs.Screen name="profile" options={{ title: 'Profile', tabBarIcon: ({ color }) => <MaterialIcons name="person" size={24} color={color} /> }} />}
     </Tabs>
   );
 }

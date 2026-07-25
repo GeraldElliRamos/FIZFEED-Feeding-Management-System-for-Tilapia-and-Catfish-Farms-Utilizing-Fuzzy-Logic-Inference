@@ -1,4 +1,4 @@
-import { NavLink, Link } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import {
   MdDashboard,
   MdSchedule,
@@ -33,6 +33,7 @@ const navAccess: Record<string, Role[]> = {
 export default function Sidebar() {
   const { profile } = useUserProfile();
   const role = profile?.role as Role | undefined;
+  const navigate = useNavigate();
 
   const canAccess = (path: string) => role ? (navAccess[path]?.includes(role) ?? true) : false;
 
@@ -87,6 +88,7 @@ export default function Sidebar() {
               const { signOut } = await import("firebase/auth");
               const { auth } = await import("./firebase");
               await signOut(auth);
+              navigate("/");
             } catch (err) {
               console.error(err);
             }

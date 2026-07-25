@@ -1,7 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Redirect, Stack, useRootNavigationState, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
@@ -18,9 +17,8 @@ const tabAccess: Record<string, Role[]> = {
   profile: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
 };
 
-function getDefaultTabPath(role: Role | undefined) {
-  if (role === 'viewer') return '/(tabs)/index';
-  return '/(tabs)/index';
+function getDefaultTabPath(_role: Role | undefined) {
+  return '/(tabs)/index' as const;
 }
 
 /* ── Auth Guard: redirects unauthenticated users away from protected screens ── */
@@ -28,26 +26,31 @@ function AuthGuard() {
   const { user, loading } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
   const segments = useSegments();
-  const router = useRouter();
+  const navigationState = useRootNavigationState();
   const role = profile?.role as Role | undefined;
 
-  useEffect(() => {
-    if (loading || profileLoading) return; // Wait until Firebase resolves auth state
+  if (!navigationState?.key || loading) return null;
 
-    const inTabsGroup = segments[0] === '(tabs)';
-    const tabName = segments[1] || 'index';
-    const canAccessTab = role ? (tabAccess[tabName]?.includes(role) ?? true) : false;
+  const isAuthScreen = segments[0] === 'login' || segments[0] === 'signup';
 
-    if (!user && (inTabsGroup || segments[0] === 'index' || !segments[0])) {
-      // Not logged in → redirect directly to login
-      router.replace('/login');
-    } else if (user && (segments[0] === 'login' || segments[0] === 'signup' || segments[0] === 'index' || !segments[0])) {
-      // Already logged in → go to main app dashboard tabs
-      router.replace('/(tabs)');
-    } else if (user && inTabsGroup && !canAccessTab) {
-      router.replace(getDefaultTabPath(role));
-    }
-  }, [user, loading, profileLoading, segments, router, role]);
+  // Check authentication first. A signed-out user must never wait on Firestore.
+  if (!user) {
+    return isAuthScreen ? null : <Redirect href="/login" />;
+  }
+
+  if (isAuthScreen || !segments[0]) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  if (profileLoading) return null;
+
+  const inTabsGroup = segments[0] === '(tabs)';
+  const tabName = segments[1] || 'index';
+  const canAccessTab = role ? (tabAccess[tabName]?.includes(role) ?? true) : false;
+
+  if (inTabsGroup && !canAccessTab) {
+    return <Redirect href={getDefaultTabPath(role)} />;
+  }
 
   return null;
 }

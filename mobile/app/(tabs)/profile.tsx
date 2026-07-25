@@ -6,8 +6,7 @@ import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput, View,
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserProfile, usePonds } from '../../hooks/useFirestore';
 import { useAuth } from '../../context/AuthContext';
-import { signOut } from 'firebase/auth';
-import { auth, db } from '../../firebase';
+import { db } from '../../firebase';
 import { doc, updateDoc } from 'firebase/firestore';
 
 const colors = {
@@ -55,7 +54,7 @@ function BottomNavItem({ icon, label, active, notification, onPress }: BottomNav
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { profile, loading } = useUserProfile();
   const { ponds, loading: pondsLoading } = usePonds();
   const currentDate = new Date();
@@ -74,10 +73,19 @@ export default function ProfileScreen() {
   const [fieldModalLabel, setFieldModalLabel] = useState('');
   const [fieldModalKey, setFieldModalKey] = useState('');
   const [fieldModalValue, setFieldModalValue] = useState('');
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const daysActive = user?.metadata?.creationTime
     ? Math.max(1, Math.floor((currentDate.getTime() - new Date(user.metadata.creationTime).getTime()) / (1000 * 60 * 60 * 24)))
     : 1;
+
+  const getUserRef = () => {
+    if (!user?.uid) {
+      throw new Error('Missing authenticated user.');
+    }
+
+    return doc(db, 'users', user.uid);
+  };
 
   if (loading || pondsLoading) {
     return (
@@ -88,21 +96,17 @@ export default function ProfileScreen() {
   }
 
   const handleSignOut = async () => {
-    Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign Out',
-        style: 'destructive',
-        onPress: async () => {
-          try {
-            await signOut(auth);
-            router.replace('/login');
-          } catch (err) {
-            console.error('Sign out error:', err);
-          }
-        },
-      },
-    ]);
+    if (isSigningOut) return;
+
+    setIsSigningOut(true);
+    try {
+      await logout();
+      router.replace('/login');
+    } catch (err) {
+      console.error('Sign out error:', err);
+      Alert.alert('Sign Out Failed', 'We could not sign you out. Please try again.');
+      setIsSigningOut(false);
+    }
   };
 
   const openEditProfile = () => {
@@ -114,10 +118,10 @@ export default function ProfileScreen() {
   };
 
   const handleSaveProfile = async () => {
-    if (!user) return;
+    if (!user?.uid) return;
     setIsSaving(true);
     try {
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = getUserRef();
       await updateDoc(userRef, {
         displayName: editName.trim(),
         farmName: editFarmName.trim(),
@@ -142,10 +146,10 @@ export default function ProfileScreen() {
   };
 
   const handleSaveField = async () => {
-    if (!user) return;
+    if (!user?.uid) return;
     setIsSaving(true);
     try {
-      const userRef = doc(db, 'users', user.uid);
+      const userRef = getUserRef();
       await updateDoc(userRef, { [fieldModalKey]: fieldModalValue.trim() });
       Alert.alert('Updated', `${fieldModalLabel} has been updated.`);
       setFieldModalVisible(false);
@@ -228,7 +232,7 @@ export default function ProfileScreen() {
                   <MaterialIcons name="person" size={48} color={colors.primary} />
                 </View>
                 <Pressable style={styles.cameraButton} onPress={handleCameraPress}>
-                  <MaterialIcons name="photo_camera" size={18} color={colors.onSecondary} />
+                  <MaterialIcons name="photo-camera" size={18} color={colors.onSecondary} />
                 </Pressable>
               </View>
               <Text style={styles.profileName}>{profile?.displayName || "Juan Dela Cruz"}</Text>
@@ -336,12 +340,20 @@ export default function ProfileScreen() {
                 <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />
               </Pressable>
               <View style={styles.divider} />
-              <Pressable style={styles.listRow} onPress={handleSignOut}>
+              <Pressable
+                style={({ pressed }) => [styles.listRow, (pressed || isSigningOut) && styles.listRowDisabled]}
+                onPress={handleSignOut}
+                disabled={isSigningOut}
+                accessibilityRole="button"
+                accessibilityLabel="Sign out"
+              >
                 <View style={styles.settingRowLeft}>
                   <MaterialIcons name="logout" size={20} color={colors.error} />
-                  <Text style={[styles.listValue, { color: colors.error }]}>Sign Out</Text>
+                  <Text style={[styles.listValue, { color: colors.error }]}>
+                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                  </Text>
                 </View>
-                <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />
+                {isSigningOut ? <ActivityIndicator size="small" color={colors.error} /> : <MaterialIcons name="chevron-right" size={20} color={colors.outlineVariant} />}
               </Pressable>
             </View>
           </View>
@@ -660,6 +672,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 16,
     paddingHorizontal: 16,
+  },
+  listRowDisabled: {
+    opacity: 0.6,
   },
   iconBox: {
     width: 40,

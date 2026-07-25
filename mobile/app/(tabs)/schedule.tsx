@@ -729,7 +729,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceContainerLowest,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: colors.surfaceContainer,
+    borderColor: colors.surfaceContainerLow,
   },
   emptyTitle: {
     color: colors.onSurface,
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 19,
   },
-  card: { backgroundColor: colors.surfaceContainerLowest, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.surfaceContainer },
+  card: { backgroundColor: colors.surfaceContainerLowest, borderRadius: 18, padding: 16, borderWidth: 1, borderColor: colors.surfaceContainerLow },
   cardInactive: { opacity: 0.72, backgroundColor: 'rgba(243, 244, 245, 0.9)' },
   cardTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 16 },
   cardLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },

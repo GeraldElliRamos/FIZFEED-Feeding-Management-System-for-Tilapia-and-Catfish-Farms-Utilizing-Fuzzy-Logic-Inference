@@ -15,14 +15,31 @@ export function useUserProfile() {
       return;
     }
 
-    const unsubscribe = onSnapshot(doc(db, "users", user.uid), (doc) => {
-      if (doc.exists()) {
-        setProfile({ id: doc.id, ...doc.data() });
-      } else {
-        setProfile(null);
-      }
+    let unsubscribe = () => {};
+
+    try {
+      const userDocRef = doc(db, "users", user.uid);
+      unsubscribe = onSnapshot(
+        userDocRef,
+        (snapshot) => {
+          if (snapshot.exists()) {
+            setProfile({ id: snapshot.id, ...snapshot.data() });
+          } else {
+            setProfile(null);
+          }
+          setLoading(false);
+        },
+        (error) => {
+          console.error("Failed to subscribe to user profile:", error);
+          setProfile(null);
+          setLoading(false);
+        }
+      );
+    } catch (error) {
+      console.error("Failed to initialize user profile listener:", error);
+      setProfile(null);
       setLoading(false);
-    });
+    }
 
     return () => unsubscribe();
   }, [user]);

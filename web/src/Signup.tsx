@@ -45,7 +45,7 @@ function Signup() {
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
-        email,
+        email.trim(),
         password
       );
       // Save the user's display name
@@ -58,7 +58,7 @@ function Signup() {
       // Create user document
       await setDoc(doc(db, "users", uid), {
         displayName: fullName.trim(),
-        email: email,
+        email: email.trim(),
         role,
         farmName: farmName.trim() || "My Aqua Farm",
         address: address.trim(),
@@ -70,8 +70,7 @@ function Signup() {
       navigate("/dashboard");
     } catch (err) {
       console.error("Signup error: ", err);
-      // Force displaying the exact error object so we can see what's wrong
-      setError(err instanceof Error ? err.message : JSON.stringify(err));
+      setError("Sign up failed. Please check your details and try again.");
     } finally {
       setIsSubmitting(false);
     }

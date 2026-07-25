@@ -5,6 +5,7 @@ import {
   Route,
   Link,
   useNavigate,
+  useLocation,
   Navigate,
 } from "react-router-dom";
 import { useState } from "react";
@@ -47,8 +48,9 @@ const routeAccess: Record<string, Role[]> = {
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
-  const role = (String(profile?.role || "farm_owner") as Role);
-  const currentPath = window.location.pathname;
+  const location = useLocation();
+  const role = profile?.role as Role | undefined;
+  const currentPath = location.pathname;
   const allowedRoles = routeAccess[currentPath];
 
   if (loading || profileLoading) {
@@ -82,6 +84,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!user) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (!role) {
     return <Navigate to="/" replace />;
   }
 

@@ -76,7 +76,6 @@ export default function SignUpScreen() {
       // 1. Create Firebase Auth User
       const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
       const uid = userCredential.user.uid;
-      console.log("Firebase Auth User Created:", uid);
 
       // 2. Update Auth Profile
       try {

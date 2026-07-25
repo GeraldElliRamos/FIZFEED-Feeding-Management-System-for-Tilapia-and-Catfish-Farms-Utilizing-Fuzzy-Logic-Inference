@@ -18,7 +18,7 @@ const tabAccess: Record<string, Role[]> = {
   profile: ['admin', 'farm_owner', 'farm_staff', 'viewer'],
 };
 
-function getDefaultTabPath(role: Role) {
+function getDefaultTabPath(role: Role | undefined) {
   if (role === 'viewer') return '/(tabs)/index';
   return '/(tabs)/index';
 }
@@ -29,14 +29,14 @@ function AuthGuard() {
   const { profile, loading: profileLoading } = useUserProfile();
   const segments = useSegments();
   const router = useRouter();
-  const role = (String(profile?.role || 'farm_owner') as Role);
+  const role = profile?.role as Role | undefined;
 
   useEffect(() => {
     if (loading || profileLoading) return; // Wait until Firebase resolves auth state
 
     const inTabsGroup = segments[0] === '(tabs)';
     const tabName = segments[1] || 'index';
-    const canAccessTab = tabAccess[tabName]?.includes(role) ?? true;
+    const canAccessTab = role ? (tabAccess[tabName]?.includes(role) ?? true) : false;
 
     if (!user && (inTabsGroup || segments[0] === 'index' || !segments[0])) {
       // Not logged in → redirect directly to login

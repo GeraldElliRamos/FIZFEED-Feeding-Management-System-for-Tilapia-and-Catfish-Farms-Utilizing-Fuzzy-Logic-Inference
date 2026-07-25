@@ -32,9 +32,9 @@ const navAccess: Record<string, Role[]> = {
 
 export default function Sidebar() {
   const { profile } = useUserProfile();
-  const role = (String(profile?.role || "farm_owner") as Role);
+  const role = profile?.role as Role | undefined;
 
-  const canAccess = (path: string) => navAccess[path]?.includes(role) ?? true;
+  const canAccess = (path: string) => role ? (navAccess[path]?.includes(role) ?? true) : false;
 
   return (
     <aside className="sidebar">

@@ -124,65 +124,83 @@ FIZFEED/
 
 ## Getting Started
 
-### 1) Install dependencies
+### Step 1: Open the project folder
+
+Open VS Code at the project root:
+
+```powershell
+cd "C:\Capstone Project\FIZFEED-Fuzzy-Inference-Based-Feeding-Management-System-for-Tilapia-and-Catfish-Farms"
+```
+
+### Step 2: Install the web dependencies
 
 From the project root:
 
 ```powershell
-cd "c:\Capstone Project\FIZFEED-Fuzzy-Inference-Based-Feeding-Management-System-for-Tilapia-and-Catfish-Farms"
 cd web
 npm install
 cd ..
-cd mobile
-npm install
+```
+
+### Step 3: Install the backend dependencies
+
+The backend already uses a Python virtual environment named `.venv`. If it is already created, just activate it and install requirements:
+
+```powershell
+cd backend
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 cd ..
 ```
 
-### 2) Run the web app
+If the backend venv has already been set up before, you only need to activate it when running the API.
 
-From the root directory:
+### Step 4: Start the backend
+
+From the `backend/` folder:
 
 ```powershell
-npm run web:dev
+.\.venv\Scripts\Activate.ps1
+uvicorn app.main:app --reload --port 8000
 ```
 
-Or run it directly inside `web/`:
+The backend will run at:
+
+- `http://localhost:8000`
+- `http://localhost:8000/health`
+
+### Step 5: Start the web app
+
+Open a second terminal in VS Code, then run:
 
 ```powershell
 cd web
 npm run dev
 ```
 
-The web app opens at `http://localhost:5173`.
+The web app will run at:
 
-#### Web commands
+- `http://localhost:5173`
 
-- `npm run web:dev` - start the development server
-- `npm run web:build` - build the web app for production
+### Step 6: Start both apps with one command
 
-### 3) Run the mobile app
-
-From the root directory:
+If you want both apps to open automatically in separate PowerShell windows, run this from the project root:
 
 ```powershell
-npm run mobile:start
+powershell -ExecutionPolicy Bypass -File .\start-all.ps1
 ```
 
-Or run it directly inside `mobile/`:
+### Step 7: Use the app
 
-```powershell
-cd mobile
-npx expo start
-```
+1. Open the web app at `http://localhost:5173`
+2. Open the AI Recommendations page
+3. Make sure the backend is running at `http://localhost:8000`
+4. Generate a recommendation
 
-Then:
+### Web commands
 
-1. A QR code appears in the terminal.
-2. Open **Expo Go** on your Android phone.
-3. Scan the QR code.
-4. The app loads on your phone.
-
-Make sure your phone and computer are on the same Wi-Fi network.
+- `npm run dev` - start the web development server
+- `npm run build` - build the web app for production
 
 #### Mobile commands
 

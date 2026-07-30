@@ -182,7 +182,35 @@ The web app will run at:
 
 - `http://localhost:5173`
 
-### Step 6: Start both apps with one command
+### Step 6: Start the mobile app
+
+Open a second terminal in VS Code, then run:
+
+```powershell
+cd mobile
+npx expo start
+```
+
+If you are testing on:
+
+- **Android emulator**: the app can reach your backend at `http://10.0.2.2:8000`
+- **Physical phone with Expo Go**: set `EXPO_PUBLIC_BACKEND_URL` to your computer's LAN IP, for example `http://192.168.1.20:8000`
+
+Example `.env` value for the mobile app:
+
+```powershell
+EXPO_PUBLIC_BACKEND_URL=http://192.168.1.20:8000
+```
+
+If your computer IP is `192.168.254.128`, use this instead:
+
+```powershell
+EXPO_PUBLIC_BACKEND_URL=http://192.168.254.128:8000
+```
+
+After updating `mobile/.env`, restart Expo so it picks up the new value.
+
+### Step 7: Start both apps with one command
 
 If you want both apps to open automatically in separate PowerShell windows, run this from the project root:
 
@@ -190,12 +218,20 @@ If you want both apps to open automatically in separate PowerShell windows, run 
 powershell -ExecutionPolicy Bypass -File .\start-all.ps1
 ```
 
-### Step 7: Use the app
+### Step 8: Use the app
 
 1. Open the web app at `http://localhost:5173`
 2. Open the AI Recommendations page
 3. Make sure the backend is running at `http://localhost:8000`
 4. Generate a recommendation
+
+### Mobile troubleshooting
+
+- If the mobile app shows `Cannot reach the backend`, check that the backend is running on your computer.
+- If you are using a physical phone, do not use `localhost` in the mobile backend URL.
+- Make sure the phone and computer are on the same Wi-Fi network.
+- Restart Expo after changing `mobile/.env`.
+- If the phone still cannot connect, try temporarily disabling the Windows firewall to confirm whether it is blocking port `8000`.
 
 ### Web commands
 

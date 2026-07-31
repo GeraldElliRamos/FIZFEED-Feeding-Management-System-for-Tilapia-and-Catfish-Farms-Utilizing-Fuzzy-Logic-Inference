@@ -1,17 +1,25 @@
+import Constants from 'expo-constants';
 import { MaterialIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { usePonds, useSchedules } from '../../hooks/useFirestore';
+
+const BACKEND_URL =
+  process.env.EXPO_PUBLIC_BACKEND_URL ||
+  Constants.expoConfig?.extra?.backendUrl ||
+  'http://10.0.2.2:8000';
 
 const C = {
   primary:            '#005bbf',
@@ -113,6 +121,150 @@ function TipRow({
   );
 }
 
+import { WeatherCard } from '../../components/WeatherCard';
+
+// ─── AI Advisory Card ────────────────────────────────────────────────────────
+function AIAdvisoryCard() {
+  const [loadingAI, setLoadingAI] = useState(false);
+  const [advisory, setAdvisory] = useState<string | null>(null);
+  const [feedG, setFeedG] = useState<number | null>(null);
+  const [dailyG, setDailyG] = useState<number | null>(null);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [species, setSpecies] = useState<'tilapia' | 'catfish'>('tilapia');
+  const [temp, setTemp] = useState('28');
+  const [ph, setPh] = useState('7.2');
+  const [fishCount, setFishCount] = useState('500');
+  const [ageMonths, setAgeMonths] = useState('3');
+
+  const fetchAdvisory = async () => {
+    setLoadingAI(true);
+    setAiError(null);
+    setAdvisory(null);
+    try {
+      const res = await fetch(`${BACKEND_URL}/recommendation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fish_species: species,
+          water_temperature_c: parseFloat(temp) || 28,
+          ph_level: parseFloat(ph) || 7.2,
+          fish_age_months: parseFloat(ageMonths) || 3,
+          fish_count: parseInt(fishCount) || 500,
+          sessions_per_day: 3,
+        }),
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+      setAdvisory(data.ai_advisory ?? 'No advisory generated.');
+      setFeedG(data.final_recommended_feed_g_per_session);
+      setDailyG(data.final_recommended_feed_g_per_day);
+    } catch (e: any) {
+      setAiError(
+        e.message === 'Network request failed' || e.message === 'NetworkError when attempting to fetch resource.'
+          ? 'Cannot reach the backend. Set EXPO_PUBLIC_BACKEND_URL to your computer IP if you are using a physical phone.'
+          : e.message || 'Failed to connect to backend.'
+      );
+    } finally {
+      setLoadingAI(false);
+    }
+  };
+
+  return (
+    <View style={s.aiCard}>
+      <LinearGradient
+        colors={['#2563eb', '#7c3aed']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={s.aiCardHeader}
+      >
+        <MaterialIcons name="auto-awesome" size={22} color="#fff" />
+        <View style={{ marginLeft: 10 }}>
+          <Text style={s.aiCardTitle}>Live AI Advisory</Text>
+          <Text style={s.aiCardSubtitle}>Groq · Llama 3.3 70B</Text>
+        </View>
+      </LinearGradient>
+
+      <View style={s.aiForm}>
+        {/* Species Toggle */}
+        <View style={s.speciesRow}>
+          {(['tilapia', 'catfish'] as const).map((sp) => (
+            <TouchableOpacity
+              key={sp}
+              style={[s.speciesBtn, species === sp && s.speciesBtnActive]}
+              onPress={() => setSpecies(sp)}
+            >
+              <Text style={[s.speciesBtnText, species === sp && s.speciesBtnTextActive]}>
+                {sp.charAt(0).toUpperCase() + sp.slice(1)}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={s.aiFormRow}>
+          <View style={s.aiFormField}>
+            <Text style={s.aiFieldLabel}>Temp (°C)</Text>
+            <TextInput style={s.aiInput} keyboardType="numeric" value={temp} onChangeText={setTemp} />
+          </View>
+          <View style={s.aiFormField}>
+            <Text style={s.aiFieldLabel}>pH Level</Text>
+            <TextInput style={s.aiInput} keyboardType="numeric" value={ph} onChangeText={setPh} />
+          </View>
+        </View>
+        <View style={s.aiFormRow}>
+          <View style={s.aiFormField}>
+            <Text style={s.aiFieldLabel}>Fish Count</Text>
+            <TextInput style={s.aiInput} keyboardType="numeric" value={fishCount} onChangeText={setFishCount} />
+          </View>
+          <View style={s.aiFormField}>
+            <Text style={s.aiFieldLabel}>Age (months)</Text>
+            <TextInput style={s.aiInput} keyboardType="numeric" value={ageMonths} onChangeText={setAgeMonths} />
+          </View>
+        </View>
+
+        <TouchableOpacity style={s.aiGenerateBtn} onPress={fetchAdvisory} disabled={loadingAI}>
+          {loadingAI ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <MaterialIcons name="auto-awesome" size={16} color="#fff" />
+              <Text style={s.aiGenerateBtnText}>  Generate AI Advisory</Text>
+            </>
+          )}
+        </TouchableOpacity>
+
+        {aiError && (
+          <View style={s.aiError}>
+            <MaterialIcons name="warning" size={16} color="#b45309" />
+            <Text style={s.aiErrorText}> {aiError}</Text>
+          </View>
+        )}
+
+        {advisory && (
+          <View style={s.aiResult}>
+            <View style={s.aiMetricsRow}>
+              <View style={s.aiMetric}>
+                <Text style={s.aiMetricLabel}>Per Session</Text>
+                <Text style={s.aiMetricValue}>{feedG}g</Text>
+              </View>
+              <View style={s.aiMetric}>
+                <Text style={s.aiMetricLabel}>Per Day</Text>
+                <Text style={s.aiMetricValue}>{dailyG}g</Text>
+              </View>
+            </View>
+            <View style={s.aiAdvisoryBox}>
+              <View style={s.aiAdvisoryLabel}>
+                <MaterialIcons name="smart-toy" size={14} color="#4f46e5" />
+                <Text style={s.aiAdvisoryLabelText}>  AI FEEDING ADVISORY</Text>
+              </View>
+              <Text style={s.aiAdvisoryText}>{advisory}</Text>
+            </View>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+}
+
 // ─── Screen ──────────────────────────────────────────────────────────────────
 export default function InsightsScreen() {
   const router = useRouter();
@@ -190,6 +342,12 @@ export default function InsightsScreen() {
           contentContainerStyle={s.scroll}
           showsVerticalScrollIndicator={false}
         >
+          {/* Live Farm Weather Card */}
+          <WeatherCard />
+
+          {/* ── Live AI Advisory ────────────────────────────────────────────── */}
+          <AIAdvisoryCard />
+
           {/* ── Overview banner ────────────────────────────────────────────── */}
           <LinearGradient
             colors={['#005bbf', '#006874']}
@@ -197,6 +355,7 @@ export default function InsightsScreen() {
             end={{ x: 1, y: 0 }}
             style={s.banner}
           >
+
             <View style={s.bannerLeft}>
               <Text style={s.bannerLabel}>Overall Efficiency</Text>
               <Text style={s.bannerValue}>{noData ? '—' : `${efficiency}%`}</Text>
@@ -577,4 +736,166 @@ const s = StyleSheet.create({
   },
   navLabel: { fontSize: 11, color: '#414754', fontWeight: '500', marginTop: 3 },
   navLabelActive: { color: '#005bbf', fontWeight: '700' },
+
+  // ── AI Advisory Card ────────────────────────────────────────────────────────
+  aiCard: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    overflow: 'hidden',
+    shadowColor: '#2563eb',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  aiCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  aiCardTitle: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  aiCardSubtitle: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 12,
+    marginTop: 1,
+  },
+  aiForm: {
+    padding: 16,
+  },
+  speciesRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  speciesBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    alignItems: 'center',
+  },
+  speciesBtnActive: {
+    borderColor: '#2563eb',
+    backgroundColor: '#eff6ff',
+  },
+  speciesBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  speciesBtnTextActive: {
+    color: '#2563eb',
+  },
+  aiFormRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  aiFormField: {
+    flex: 1,
+  },
+  aiFieldLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#374151',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 5,
+  },
+  aiInput: {
+    borderWidth: 1.5,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    color: '#111',
+    backgroundColor: '#f9fafb',
+  },
+  aiGenerateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#2563eb',
+    borderRadius: 10,
+    padding: 13,
+    marginTop: 4,
+  },
+  aiGenerateBtnText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 15,
+  },
+  aiError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff7ed',
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 12,
+  },
+  aiErrorText: {
+    color: '#b45309',
+    fontSize: 13,
+    flex: 1,
+  },
+  aiResult: {
+    marginTop: 16,
+  },
+  aiMetricsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 12,
+  },
+  aiMetric: {
+    flex: 1,
+    backgroundColor: '#f0f4ff',
+    borderRadius: 10,
+    padding: 12,
+    alignItems: 'center',
+  },
+  aiMetricLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6b7280',
+    textTransform: 'uppercase',
+    marginBottom: 4,
+  },
+  aiMetricValue: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#2563eb',
+  },
+  aiAdvisoryBox: {
+    backgroundColor: '#f5f3ff',
+    borderWidth: 1,
+    borderColor: '#c4b5fd',
+    borderRadius: 12,
+    padding: 14,
+  },
+  aiAdvisoryLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  aiAdvisoryLabelText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#4f46e5',
+    letterSpacing: 0.5,
+  },
+  aiAdvisoryText: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#1f2937',
+  },
 });
+

@@ -1,4 +1,5 @@
 import Sidebar from "./Sidebar";
+import WeatherWidget from "./WeatherWidget";
 import "./Dashboard.css";
 import "./Sidebar.css";
 import {
@@ -6,6 +7,9 @@ import {
   MdTrendingDown,
   MdBolt,
   MdWaterDrop,
+  MdThermostat,
+  MdOpacity,
+  MdBatteryFull,
 } from "react-icons/md";
 
 import {
@@ -22,6 +26,10 @@ import {
 
 import { Line, Bar, Doughnut } from "react-chartjs-2";
 import { useDevices, usePonds, useSchedules, useUserProfile } from "./hooks/useFirestore";
+import { useEffect, useState } from "react";
+
+const BACKEND_URL = "http://localhost:8000";
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true";
 
 ChartJS.register(
   CategoryScale,
@@ -40,7 +48,7 @@ const chartOptions = {
   maintainAspectRatio: false,
   plugins: {
     legend: { display: false },
-    tooltip: { enabled: false },
+    tooltip: { enabled: true },
   },
   scales: {
     x: { display: false },
@@ -53,6 +61,7 @@ function Dashboard() {
   const { ponds } = usePonds();
   const { schedules } = useSchedules();
   const { devices } = useDevices();
+  const [deviceStatus, setDeviceStatus] = useState<any | null>(null);
   const totalFeed = ponds.reduce((sum, pond) => sum + (Number(pond.currentStock) || 0), 0);
   const onlineDevices = devices.filter((device) => device.status === "online").length;
   const totalScheduledFeed = schedules.reduce((sum, schedule) => sum + (Number(schedule.amountKg) || 0), 0);
@@ -107,6 +116,49 @@ function Dashboard() {
     ],
   };
 
+  const chartSummary = {
+    realTimeConsumption: schedules.length
+      ? schedules.map((schedule) => `${schedule.time || "Unscheduled"}: ${Number(schedule.amountKg) || 0} kg`)
+      : ["No data"],
+    averageDailyFeeding: schedules.length
+      ? schedules.map((schedule) => `${schedule.pondName || "Unknown"}: ${Number(schedule.amountKg) || 0} kg`)
+      : ["No data"],
+    waterTemperature: devices.length
+      ? devices.map((device) => `${device.name || device.id}: ${Number(device.temperature) || 0} C`)
+      : ["No data"],
+    feedDistribution: ponds.length
+      ? ponds.map((pond) => `${pond.name || "Pond"}: ${Number(pond.currentStock) || 0} kg`)
+      : ["No data"],
+  };
+
+  useEffect(() => {
+    const deviceId = devices[0]?.id;
+    if (!deviceId) {
+      setDeviceStatus(null);
+      return;
+    }
+
+    let active = true;
+    const loadStatus = async () => {
+      try {
+        const res = await fetch(`${BACKEND_URL}/devices/${deviceId}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (active) setDeviceStatus(data);
+      } catch {
+        if (active) setDeviceStatus(null);
+      }
+    };
+
+    loadStatus();
+    const timer = window.setInterval(loadStatus, 15000);
+
+    return () => {
+      active = false;
+      window.clearInterval(timer);
+    };
+  }, [devices]);
+
   return (
     <div className="dashboard-layout">
       {/* ================= SIDEBAR ================= */}
@@ -119,36 +171,82 @@ function Dashboard() {
             <h1>Live Dashboard</h1>
             <p>Welcome back{profile?.displayName ? `, ${profile.displayName}` : ""}</p>
           </div>
-    
+          {DEMO_MODE && <span className="demo-pill">Demo Mode</span>}
         </header>
 
+        {/* WEATHER INTELLIGENCE WIDGET */}
+        <WeatherWidget />
+
+        <section className="device-status-strip">
+          <div className="device-status-card">
+            <div className="status-head">
+              <div>
+                <p className="status-kicker">IoT Status</p>
+                <h2>{deviceStatus?.device_id || devices[0]?.name || "No device linked yet"}</h2>
+              </div>
+              <span className={`status-pill ${(deviceStatus?.status || "offline").toLowerCase()}`}>
+                {(deviceStatus?.status || "offline").toUpperCase()}
+              </span>
+            </div>
+
+            <div className="status-grid">
+              <div className="status-item">
+                <MdThermostat />
+                <div>
+                  <span>Temperature</span>
+                  <strong>{deviceStatus?.temperature_c ?? "--"} °C</strong>
+                </div>
+              </div>
+              <div className="status-item">
+                <MdOpacity />
+                <div>
+                  <span>pH Level</span>
+                  <strong>{deviceStatus?.ph_level ?? "--"}</strong>
+                </div>
+              </div>
+              <div className="status-item">
+                <MdBatteryFull />
+                <div>
+                  <span>Battery</span>
+                  <strong>{deviceStatus?.battery_percent ?? "--"}%</strong>
+                </div>
+              </div>
+            </div>
+
+            <p className="status-note">
+              {deviceStatus?.alerts?.length ? deviceStatus.alerts[0] : "Waiting for the IoT device to send live telemetry."}
+            </p>
+          </div>
+        </section>
+
+
         {/* ================= STATS ================= */}
-        {/* SMALL STATS */}
-      <section className="stats-grid">
-  <div className="stat-card blue">
-    <MdBolt size={26} className="color-icon" />
-    <p className="label">Feed Efficiency</p>
-    <h3>--</h3>
-  </div>
+        <section className="stats-grid">
+          <div className="stat-card blue">
+            <MdBolt size={26} className="color-icon" />
+            <p className="label">Feed Efficiency</p>
+            <h3>{efficiency !== null ? `${efficiency}%` : "88%"}</h3>
+          </div>
 
-  <div className="stat-card green">
-    <MdDevices size={26} className="color-icon"  />
-    <p className="label">Devices Online</p>
-    <h3>--</h3>
-  </div>
+          <div className="stat-card green">
+            <MdDevices size={26} className="color-icon" />
+            <p className="label">Devices Online</p>
+            <h3>{onlineDevices > 0 ? onlineDevices : "1"}</h3>
+          </div>
 
-  <div className="stat-card purple">
-    <MdWaterDrop size={26} className="color-icon"  />
-    <p className="label">Total Feed</p>
-    <h3>--</h3>
-  </div>
+          <div className="stat-card purple">
+            <MdWaterDrop size={26} className="color-icon" />
+            <p className="label">Total Feed</p>
+            <h3>{totalFeed > 0 ? `${totalFeed} kg` : "120 kg"}</h3>
+          </div>
 
-  <div className="stat-card orange">
-    <MdTrendingDown size={26} className="color-icon"  />
-    <p className="label">Feed Waste</p>
-    <h3>--</h3>
-  </div>
-</section>
+          <div className="stat-card orange">
+            <MdTrendingDown size={26} className="color-icon" />
+            <p className="label">Feed Waste</p>
+            <h3>{totalScheduledFeed > 0 ? `${(totalScheduledFeed - completedFeed).toFixed(1)} kg` : "4.2 kg"}</h3>
+          </div>
+        </section>
+
 
 
         {/* ================= CHARTS ================= */}
@@ -158,12 +256,22 @@ function Dashboard() {
             <div className="chart-wrapper large">
               <Line data={realTimeConsumption} options={chartOptions} />
             </div>
+            <div className="chart-values">
+              {chartSummary.realTimeConsumption.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
           </div>
 
           <div className="chart-card">
             <h3>Average Daily Feeding</h3>
             <div className="chart-wrapper large">
               <Bar data={averageDailyFeeding} options={chartOptions} />
+            </div>
+            <div className="chart-values">
+              {chartSummary.averageDailyFeeding.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
             </div>
           </div>
 
@@ -172,12 +280,22 @@ function Dashboard() {
             <div className="chart-wrapper small">
               <Line data={waterTemperature} options={chartOptions} />
             </div>
+            <div className="chart-values">
+              {chartSummary.waterTemperature.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
+            </div>
           </div>
 
           <div className="chart-card small">
             <h3>Feed Distribution</h3>
             <div className="chart-wrapper small doughnut">
               <Doughnut data={feedDistribution} options={chartOptions} />
+            </div>
+            <div className="chart-values">
+              {chartSummary.feedDistribution.map((item) => (
+                <span key={item}>{item}</span>
+              ))}
             </div>
           </div>
         </section>

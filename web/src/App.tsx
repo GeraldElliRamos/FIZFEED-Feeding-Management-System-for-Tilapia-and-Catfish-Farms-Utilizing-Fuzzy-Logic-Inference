@@ -27,6 +27,7 @@ import Inventory from "./Inventory";
 import Profile from "./Profile";
 import Settings from "./Settings";
 import FAQ from "./FAQ";
+import Help from "./Help";
 import { useUserProfile } from "./hooks/useFirestore";
 
 type Role = "admin" | "farm_owner" | "farm_staff" | "viewer";
@@ -42,18 +43,18 @@ const routeAccess: Record<string, Role[]> = {
   "/profile": ["admin", "farm_owner", "farm_staff", "viewer"],
   "/settings": ["admin", "farm_owner"],
   "/faq": ["admin", "farm_owner", "farm_staff", "viewer"],
+  "/help": ["admin", "farm_owner", "farm_staff", "viewer"],
 };
+
 
 /* ================= PROTECTED ROUTE ================= */
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { profile, loading: profileLoading } = useUserProfile();
   const location = useLocation();
-  const role = profile?.role as Role | undefined;
-  const currentPath = location.pathname;
-  const allowedRoles = routeAccess[currentPath];
 
-  if (loading || profileLoading) {
+  // If Firebase Auth is determining auth state
+  if (authLoading) {
     return (
       <div
         style={{
@@ -83,20 +84,59 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // If user is not logged in, redirect to login page
   if (!user) {
     return <Navigate to="/" replace />;
   }
 
-  if (!role) {
-    return <Navigate to="/" replace />;
+  // If user is logged in, wait for profile loading
+  if (profileLoading) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          height: "100vh",
+          background: "#0a192f",
+          color: "#fff",
+          fontSize: "1rem",
+          gap: "12px",
+        }}
+      >
+        <div
+          style={{
+            width: 24,
+            height: 24,
+            border: "3px solid rgba(255,255,255,0.2)",
+            borderTop: "3px solid #005BBF",
+            borderRadius: "50%",
+            animation: "spin 0.8s linear infinite",
+          }}
+        />
+        Loading Profile...
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
   }
 
-  if (allowedRoles && !allowedRoles.includes(role)) {
-    return <Navigate to="/dashboard" replace />;
+  const role = profile?.role as Role | undefined;
+  const currentPath = location.pathname;
+  const allowedRoles = routeAccess[currentPath];
+
+  // If profile document doesn't exist yet or has no role set, allow default access (or fallback to farm_owner)
+  const effectiveRole = role || "farm_owner";
+
+  if (allowedRoles && !allowedRoles.includes(effectiveRole)) {
+    if (currentPath !== "/dashboard") {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return <>{children}</>;
 }
+
+
 
 /* ================= LOGIN ================= */
 function Login() {
@@ -367,6 +407,14 @@ function App() {
           element={
             <ProtectedRoute>
               <FAQ />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/help"
+          element={
+            <ProtectedRoute>
+              <Help />
             </ProtectedRoute>
           }
         />

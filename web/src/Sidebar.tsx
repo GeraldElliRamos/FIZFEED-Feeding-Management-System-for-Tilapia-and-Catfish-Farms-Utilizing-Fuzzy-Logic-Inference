@@ -1,4 +1,4 @@
-import { NavLink, Link, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   MdDashboard,
   MdSchedule,
@@ -32,10 +32,11 @@ const navAccess: Record<string, Role[]> = {
 
 export default function Sidebar() {
   const { profile } = useUserProfile();
-  const role = profile?.role as Role | undefined;
+  const role = (profile?.role || "farm_owner") as Role;
   const navigate = useNavigate();
 
-  const canAccess = (path: string) => role ? (navAccess[path]?.includes(role) ?? true) : false;
+  const canAccess = (path: string) => navAccess[path]?.includes(role) ?? true;
+
 
   return (
     <aside className="sidebar">
@@ -61,14 +62,12 @@ export default function Sidebar() {
       </nav>
 
       <div className="sidebar-footer">
-        <button
-          type="button"
-          className="sidebar-help"
-          style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: "8px", color: "inherit", font: "inherit", padding: 0 }}
-          onClick={() => alert("FIZFEED Help & Support:\n- Sensor setup guides\n- Fuzzy logic tuning\n- Contact: support@fizfeed.com")}
+        <NavLink
+          to="/help"
+          className={({ isActive }) => (isActive ? "active" : "")}
         >
           <MdHelpOutline /> Help
-        </button>
+        </NavLink>
         <NavLink
           to="/profile"
           className={({ isActive }) => (isActive ? "active" : "")}
@@ -94,7 +93,7 @@ export default function Sidebar() {
             }
           }}
           className="logout"
-          style={{ background: "none", border: "none", cursor: "pointer", width: "100%", textAlign: "left", padding: 0 }}
+          style={{ cursor: "pointer" }}
         >
           <MdLogout /> Logout
         </button>

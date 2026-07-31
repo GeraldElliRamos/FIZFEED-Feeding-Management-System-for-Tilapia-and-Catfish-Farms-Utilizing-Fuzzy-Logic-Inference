@@ -3,22 +3,15 @@ import "./Analytics.css";
 import "./Sidebar.css";
 import { useEffect, useRef } from "react";
 import {
-  MdBolt, MdDeleteOutline, MdAttachMoney,
+  MdBolt, MdDeleteOutline,
   MdTrendingUp, 
 } from "react-icons/md";
-import { usePonds, useSchedules } from "./hooks/useFirestore";
+import { usePonds } from "./hooks/useFirestore";
 
 function Analytics() {
-  const { schedules } = useSchedules();
   const { ponds } = usePonds();
   const weeklyRef = useRef<HTMLCanvasElement>(null);
   const tempRef = useRef<HTMLCanvasElement>(null);
-  const totalFed = schedules.reduce((sum, schedule) => sum + (Number(schedule.amountKg) || 0), 0);
-  const completedFeed = schedules
-    .filter((schedule) => schedule.status?.toLowerCase() === "completed")
-    .reduce((sum, schedule) => sum + (Number(schedule.amountKg) || 0), 0);
-  const efficiency = totalFed > 0 ? Math.round((completedFeed / totalFed) * 100) : null;
-  const waste = Math.max(totalFed - completedFeed, 0);
   const wasteBars = ponds.length
     ? ponds.map((pond) => {
         const capacity = Number(pond.capacity) || 0;
@@ -159,12 +152,6 @@ function Analytics() {
   <div className="stat-card red">
     <MdDeleteOutline size={26} className="color-icon" />
     <p className="label">Waste</p>
-    <h3>--</h3>
-  </div>
-
-  <div className="stat-card purple">
-    <MdAttachMoney size={26} className="color-icon" />
-    <p className="label">Savings</p>
     <h3>--</h3>
   </div>
 </section>

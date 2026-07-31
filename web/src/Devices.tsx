@@ -20,6 +20,10 @@ function Devices() {
   const { devices, loading } = useDevices();
   const { user } = useAuth();
 
+  const totalDevices = devices.length;
+  const onlineDevices = devices.filter((d) => (d.status || "").toLowerCase() === "online").length;
+  const offlineDevices = totalDevices - onlineDevices;
+
   const handleDeleteDevice = async (deviceId: string, deviceName: string) => {
     if (!user) {
       window.alert("Please sign in first.");
@@ -53,19 +57,19 @@ function Devices() {
         <section className="device-summary-grid">
           <div className="summary-card online">
             <MdWifi className="summary-icon" />
-            <h2>--</h2>
+            <h2>{onlineDevices}</h2>
             <p>Online</p>
           </div>
 
           <div className="summary-card offline">
             <MdWifiOff className="summary-icon" />
-            <h2>--</h2>
+            <h2>{offlineDevices}</h2>
             <p>Offline</p>
           </div>
 
           <div className="summary-card total">
             <MdDevicesOther className="summary-icon" />
-            <h2>--</h2>
+            <h2>{totalDevices}</h2>
             <p>Total</p>
           </div>
         </section>

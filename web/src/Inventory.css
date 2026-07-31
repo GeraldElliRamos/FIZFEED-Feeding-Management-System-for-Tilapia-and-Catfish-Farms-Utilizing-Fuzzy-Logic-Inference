@@ -43,6 +43,60 @@ body {
   font-size: 15px;
 }
 
+/* ================= FEED LIMIT BANNER ================= */
+.feed-limit-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  border: 1px solid #f59e0b;
+  border-left: 4px solid #f59e0b;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-size: 0.9rem;
+  color: #78350f;
+}
+
+.feed-limit-icon {
+  color: #d97706;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.feed-limit-banner strong {
+  display: block;
+  font-weight: 700;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.feed-limit-banner p {
+  margin: 0;
+  line-height: 1.5;
+  color: #92400e;
+}
+
+/* ================= FIELD HINTS & WARNINGS ================= */
+.inventory-field-hint {
+  display: block;
+  font-size: 0.76rem;
+  color: #64748b;
+  margin-top: 4px;
+}
+
+.inventory-field-warning {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: #d97706;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+
+
 .inventory-action-button {
     display: inline-flex;
     align-items: center;

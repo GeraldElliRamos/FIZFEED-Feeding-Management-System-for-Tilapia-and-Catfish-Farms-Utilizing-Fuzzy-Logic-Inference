@@ -2,12 +2,12 @@ import Sidebar from "./Sidebar";
 import "./Inventory.css";
 import "./Sidebar.css";
 import { useState } from "react";
-import { MdAdd, MdClose, MdDeleteOutline, MdOutlineAccessTime, MdOutlineInventory, MdOutlineToday } from "react-icons/md";
+import { MdAdd, MdClose, MdDeleteOutline, MdOutlineAccessTime, MdOutlineInventory, MdOutlineToday, MdWarning } from "react-icons/md";
 
 import { usePonds } from "./hooks/useFirestore";
 import { useAuth } from "./hooks/useAuth";
 import { db } from "./firebase";
-import { addDoc, collection, deleteDoc, doc, getDocs, query, where, writeBatch } from "firebase/firestore";
+import { addDoc, collection, doc, getDocs, query, where, writeBatch } from "firebase/firestore";
 
 function Inventory() {
   const { ponds, loading } = usePonds();
@@ -57,6 +57,13 @@ function Inventory() {
     if (Number.isNaN(capacity) || capacity <= 0) {
       window.alert("Please enter a valid capacity greater than zero.");
       return;
+    }
+
+    if (capacity > 10) {
+      const confirmed = window.confirm(
+        `⚠️ Feed Limit Warning\n\nThe feeder drum holds 20 kg, but the system is configured to a 10 kg operational limit per session for safe dispensing.\n\nYou entered ${capacity} kg which exceeds the recommended 10 kg limit.\n\nDo you still want to proceed?`
+      );
+      if (!confirmed) return;
     }
 
     setIsAddingPond(true);
@@ -137,6 +144,19 @@ function Inventory() {
             <p>Monitor feed levels across all active ponds</p>
           </div>
         </header>
+
+        {/* ⚠️ Feed Drum Limit Notice */}
+        <div className="feed-limit-banner">
+          <MdWarning size={20} className="feed-limit-icon" />
+          <div>
+            <strong>Feeder Drum Capacity Notice</strong>
+            <p>
+              The physical drum holds <strong>20 kg</strong>, but the operational dispensing limit per session is set to{" "}
+              <strong>10 kg</strong> to prevent overfeeding, motor overload, and water quality degradation.
+              Contact your system administrator to adjust this threshold.
+            </p>
+          </div>
+        </div>
 
         <section className="inventory-summary" style={{ marginTop: 8, marginBottom: 28 }}>
           <div className="summary-card">
@@ -310,10 +330,18 @@ function Inventory() {
                   <input
                     type="number"
                     min="1"
+                    max="20"
                     value={pondForm.capacity}
                     onChange={(event) => setPondForm((current) => ({ ...current, capacity: event.target.value }))}
-                    placeholder="25"
+                    placeholder="e.g. 10"
+                    style={Number(pondForm.capacity) > 10 ? { borderColor: '#f59e0b', backgroundColor: '#fffbeb' } : {}}
                   />
+                  {Number(pondForm.capacity) > 10 && (
+                    <span className="inventory-field-warning">
+                      <MdWarning size={13} /> Exceeds 10 kg session limit. Drum max is 20 kg — confirm before saving.
+                    </span>
+                  )}
+                  <span className="inventory-field-hint">Drum holds 20 kg · Recommended max per session: 10 kg</span>
                 </label>
               </div>
 

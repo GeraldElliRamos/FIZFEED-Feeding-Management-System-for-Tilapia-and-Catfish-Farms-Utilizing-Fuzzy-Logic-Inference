@@ -1,0 +1,97 @@
+.help-main {
+  background: #f4f6fb;
+  min-height: 100vh;
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+}
+
+.help-card {
+  background: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #e4e6ea;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.help-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.help-card-header {
+  padding: 18px 24px;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.help-card-header.blue { background: linear-gradient(135deg, #2563eb, #1d4ed8); }
+.help-card-header.green { background: linear-gradient(135deg, #10b981, #059669); }
+.help-card-header.purple { background: linear-gradient(135deg, #8b5cf6, #7c3aed); }
+.help-card-header.orange { background: linear-gradient(135deg, #f97316, #ea580c); }
+
+.help-card-header h3 {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.help-icon {
+  font-size: 1.5rem;
+}
+
+.help-card-body {
+  padding: 24px;
+  color: #374151;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.help-card-body p {
+  margin-top: 0;
+  margin-bottom: 14px;
+  color: #4b5563;
+}
+
+.help-card-body ul {
+  padding-left: 20px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.help-card-body li {
+  line-height: 1.5;
+}
+
+.contact-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 12px;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1e293b;
+  font-size: 0.95rem;
+}
+
+@media (max-width: 900px) {
+  .help-grid {
+    grid-template-columns: 1fr;
+  }
+}

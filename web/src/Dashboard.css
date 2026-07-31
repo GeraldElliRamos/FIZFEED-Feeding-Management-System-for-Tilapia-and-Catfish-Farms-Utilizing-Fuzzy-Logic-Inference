@@ -44,6 +44,99 @@ body {
   font-size: 15px;
 }
 
+.demo-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  color: #c2410c;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.device-status-strip {
+  margin-bottom: 32px;
+}
+
+.device-status-card {
+  background: linear-gradient(135deg, #ffffff, #f8fbff);
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 20px 22px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
+}
+
+.status-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.status-kicker {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.status-head h2 {
+  font-size: 22px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+}
+
+.status-item svg {
+  font-size: 22px;
+  color: #2563eb;
+}
+
+.status-item span {
+  display: block;
+  font-size: 11px;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.status-item strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 16px;
+  color: #0f172a;
+}
+
+.status-note {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+}
+
 .color-icon {
   color: #ffffff;
 }
@@ -194,6 +287,25 @@ body {
 .chart-wrapper canvas {
   width: 100% !important;
   height: 100% !important;
+}
+
+.chart-values {
+  margin-top: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chart-values span {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 /* ================= RESPONSIVE ================= */

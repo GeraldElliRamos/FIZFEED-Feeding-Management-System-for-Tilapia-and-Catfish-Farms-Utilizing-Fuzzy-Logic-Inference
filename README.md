@@ -161,13 +161,14 @@ From the `backend/` folder:
 
 ```powershell
 .\.venv\Scripts\Activate.ps1
-uvicorn app.main:app --reload --port 8000
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 The backend will run at:
 
 - `http://localhost:8000`
 - `http://localhost:8000/health`
+- `http://YOUR_COMPUTER_IP:8000/health` from a phone on the same Wi-Fi
 
 ### Step 5: Start the web app
 
@@ -217,6 +218,8 @@ If you want both apps to open automatically in separate PowerShell windows, run 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\start-all.ps1
 ```
+
+Note: the launcher starts the backend with `--host 0.0.0.0` so Expo Go on a physical phone can reach it over Wi-Fi.
 
 ### Step 8: Use the app
 

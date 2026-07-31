@@ -3,7 +3,8 @@ import "./Schedule.css";
 import "./Sidebar.css";
 import {
   MdAdd,
-  MdAccessTime
+  MdAccessTime,
+  MdWarning
 } from "react-icons/md";
 
 import { useSchedules } from "./hooks/useFirestore";
@@ -30,8 +31,8 @@ function Schedule() {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', background: '#f4f6fb', color: '#64748b' }}>Loading schedules...</div>;
   }
 
-  const enabledSchedules: any[] = []; // forced empty for display
-  const disabledSchedules: any[] = [];
+  const enabledSchedules = schedules.filter((s) => s.enabled !== false);
+  const disabledSchedules = schedules.filter((s) => s.enabled === false);
 
   return (
     <div className="dashboard-layout">
@@ -50,6 +51,34 @@ function Schedule() {
             <MdAdd /> New Schedule
           </button>
         </header>
+
+        {/* ⚠️ Feed Drum Limit Banner */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: 14,
+            background: 'linear-gradient(135deg, #fffbeb, #fef3c7)',
+            border: '1px solid #f59e0b',
+            borderLeft: '4px solid #f59e0b',
+            borderRadius: 12,
+            padding: '14px 18px',
+            marginBottom: 24,
+            fontSize: '0.9rem',
+            color: '#78350f',
+          }}
+        >
+          <MdWarning size={20} style={{ color: '#d97706', flexShrink: 0, marginTop: 2 }} />
+          <div>
+            <strong style={{ display: 'block', fontWeight: 700, fontSize: '0.95rem', marginBottom: 4 }}>
+              Feed Dispensing Limit: 10 kg per Session
+            </strong>
+            <p style={{ margin: 0, lineHeight: 1.5, color: '#92400e' }}>
+              The feeder drum capacity is <strong>20 kg</strong>, but each scheduled feeding session is limited to a maximum of{' '}
+              <strong>10 kg</strong> to protect motor longevity, prevent overfeeding, and maintain water quality.
+            </p>
+          </div>
+        </div>
 
         <div className="time-tabs">
           <button className="active-tab">Today</button>

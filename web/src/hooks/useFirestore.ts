@@ -3,6 +3,58 @@ import { collection, doc, onSnapshot, query, orderBy } from "firebase/firestore"
 import { db } from "../firebase";
 import { useAuth } from "./useAuth";
 
+const DEMO_MODE = import.meta.env.VITE_DEMO_MODE === "true";
+
+const DEMO_PONDS = [
+  { id: "demo-pond-1", name: "Pond A", fishType: "Tilapia", capacity: 25, currentStock: 18.5, dailyUsage: 8.2, isConnected: true },
+  { id: "demo-pond-2", name: "Pond B", fishType: "Catfish", capacity: 25, currentStock: 11.2, dailyUsage: 2.8, isConnected: true },
+];
+
+const DEMO_SCHEDULES = [
+  { id: "demo-sched-1", time: "06:00", period: "AM", amountKg: 2.5, pondName: "Pond A", fishType: "Tilapia", enabled: true, status: "Completed" },
+  { id: "demo-sched-2", time: "12:00", period: "PM", amountKg: 3.0, pondName: "Pond A", fishType: "Tilapia", enabled: true, status: "Scheduled" },
+  { id: "demo-sched-3", time: "06:00", period: "PM", amountKg: 2.7, pondName: "Pond B", fishType: "Catfish", enabled: true, status: "Scheduled" },
+];
+
+const DEMO_NOTIFICATIONS = [
+  {
+    id: "demo-notif-1",
+    type: "recommendation",
+    category: "recommendation",
+    title: "Feed Adjustment",
+    subtitle: "Weather looks clear today",
+    message: "Normal feeding is fine for Pond A. Keep sessions steady and monitor fish activity after feeding.",
+    reason: "Clear weather and stable water conditions.",
+    priority: "medium",
+    createdAt: new Date().toISOString(),
+  },
+];
+
+const DEMO_DEVICES = [
+  {
+    id: "demo-device-1",
+    name: "ESP32 Pond A",
+    pondName: "Pond A",
+    fishType: "Tilapia",
+    status: "online",
+    temperature: 28.4,
+    ph_level: 7.1,
+    batteryLevel: 87,
+    lastSeenAt: new Date().toISOString(),
+  },
+  {
+    id: "demo-device-2",
+    name: "ESP32 Pond B",
+    pondName: "Pond B",
+    fishType: "Catfish",
+    status: "offline",
+    temperature: 27.8,
+    ph_level: 6.9,
+    batteryLevel: 44,
+    lastSeenAt: new Date().toISOString(),
+  },
+];
+
 export function useUserProfile() {
   const { user } = useAuth();
   const [profile, setProfile] = useState<any>(null);
@@ -53,6 +105,12 @@ export function usePonds() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      setPonds(DEMO_PONDS);
+      setLoading(false);
+      return;
+    }
+
     if (!user) {
       setPonds([]);
       setLoading(false);
@@ -81,6 +139,12 @@ export function useSchedules() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      setSchedules(DEMO_SCHEDULES);
+      setLoading(false);
+      return;
+    }
+
     if (!user) {
       setSchedules([]);
       setLoading(false);
@@ -110,6 +174,12 @@ export function useNotifications() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      setNotifications(DEMO_NOTIFICATIONS);
+      setLoading(false);
+      return;
+    }
+
     if (!user) {
       setNotifications([]);
       setLoading(false);
@@ -142,6 +212,12 @@ export function useDevices() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (DEMO_MODE) {
+      setDevices(DEMO_DEVICES);
+      setLoading(false);
+      return;
+    }
+
     if (!user) {
       setDevices([]);
       setLoading(false);
